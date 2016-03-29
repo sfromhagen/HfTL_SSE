@@ -1,2 +1,3 @@
-# HfTL_SSE
-Secure Software Engineering - HfTL
+# Secure Software Engineering - HfTL
+
+Wiki: https://github.com/DeniseEngert/HfTL_SSE/wiki
