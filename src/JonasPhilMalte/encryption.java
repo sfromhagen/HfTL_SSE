@@ -1,5 +1,5 @@
 package JonasPhilMalte;
 
-public class encrypt {
+public class encryption {
 
 }
