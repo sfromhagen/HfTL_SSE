@@ -30,6 +30,9 @@ public class Verschluesseln {
 			System.out.println(key_byte);
 			System.out.println(encodedKey);
 			
+			
+			
+			
 			FileOutputStream keyfos = new FileOutputStream("secretkey");
 			keyfos.write(key_byte);
 			keyfos.close();
