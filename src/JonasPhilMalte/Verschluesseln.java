@@ -29,9 +29,7 @@ public class Verschluesseln {
 			String encodedKey = Base64.getEncoder().encodeToString(sKey_temp.getEncoded());
 			System.out.println(key_byte);
 			System.out.println(encodedKey);
-			
-			
-			
+						
 			
 			FileOutputStream keyfos = new FileOutputStream("secretkey");
 			keyfos.write(key_byte);
