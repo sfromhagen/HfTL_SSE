@@ -11,6 +11,7 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.Base64;
 
 public class Verschluesseln {
 
@@ -24,7 +25,16 @@ public class Verschluesseln {
 		// 1. SecretKey generieren
 			generateSecret sKey = new generateSecret();
 			SecretKey sKey_temp = sKey.neuesSecret();
-			System.out.println(sKey_temp.getEncoded());
+			byte[] key_byte = sKey_temp.getEncoded();
+			String encodedKey = Base64.getEncoder().encodeToString(sKey_temp.getEncoded());
+			System.out.println(key_byte);
+			System.out.println(encodedKey);
+			
+			FileOutputStream keyfos = new FileOutputStream("secretkey");
+			keyfos.write(key_byte);
+			keyfos.close();
+			
+			
 		
 		// 2. String mittels Secret verschluesseln & in Datei speichern
 			byte[] klartext = "Come on, look at me. No plan, no backup, no weapons worth a damn, oh, and something else I don't have: anything to lose! So, if you are sitting up there in your silly little spaceships with all your silly little guns, and you've got any plans on taking the Pandorica tonight, just remember who's standing in your way! Remember every black day I ever stopped you, and then, *and then* do the smart thing! Let somebody else try first.".getBytes();
