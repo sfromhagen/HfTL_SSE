@@ -29,9 +29,8 @@ public class Verschluesseln {
 		// 2. String mittels Secret verschluesseln & in Datei speichern
 			byte[] plaintext = "Come on, look at me. No plan, no backup, no weapons worth a damn, oh, and something else I don't have: anything to lose! So, if you are sitting up there in your silly little spaceships with all your silly little guns, and you've got any plans on taking the Pandorica tonight, just remember who's standing in your way! Remember every black day I ever stopped you, and then, *and then* do the smart thing! Let somebody else try first.".getBytes();
 			
-			Cipher aesCipher = Cipher.getInstance("AES");
-			aesCipher.init(Cipher.ENCRYPT_MODE, sKey_temp);
-			byte[] ciphertext = aesCipher.doFinal(plaintext);
+			Encryption encrypter = new Encryption();
+			byte[] ciphertext = encrypter.encrypt(plaintext, sKey_temp);
 			
 			FileOutputStream ciphertextfos = new FileOutputStream("Encryptedtext");
 			ciphertextfos.write(ciphertext);
