@@ -17,13 +17,13 @@ public class generateSecret {
 	
 	public SecretKey neuesSecret() throws Exception {
 	
-	KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-	keyGen.init(256);
-	SecretKey secKey = keyGen.generateKey();
-	byte[] key = secKey.getEncoded();
-	String encodedKey = Base64.getEncoder().encodeToString(secKey.getEncoded());
-	System.out.println(encodedKey);
-	System.out.println(key);
-	return secKey;
+		KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+		keyGen.init(256);
+		SecretKey secKey = keyGen.generateKey();
+		byte[] key = secKey.getEncoded();
+		String encodedKey = Base64.getEncoder().encodeToString(secKey.getEncoded());
+		System.out.println(encodedKey);
+		System.out.println(key);
+		return secKey;
 	}
 }
