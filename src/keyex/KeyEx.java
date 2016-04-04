@@ -70,7 +70,7 @@ public class KeyEx{
     	} else {
     		runMode = runModes.CLIENT;
     	}
-
+// Blödsinn
     	Port = oPort.value(options);
     	
     	// jopt does not support default values for InetAddress for some reason. Workaround:
