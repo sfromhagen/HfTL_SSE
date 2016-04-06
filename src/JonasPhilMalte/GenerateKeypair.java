@@ -1,11 +1,15 @@
 package JonasPhilMalte;
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.SecureRandom;
 
 public class GenerateKeypair {
 	
-	public void neuesKeypair(){
-		KeyPairGenerator keyGen = new K;
-		
-	}
+	public KeyPair neuesKeypair() throws Exception{
+		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+		keyGen.initialize(512, random);
+		return (keyGen.generateKeyPair());
+	}	
 	
 }
