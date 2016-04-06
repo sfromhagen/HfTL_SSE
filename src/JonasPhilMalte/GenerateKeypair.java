@@ -8,7 +8,7 @@ public class GenerateKeypair {
 	public KeyPair neuesKeypair() throws Exception{
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 		SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
-		keyGen.initialize(512, random);
+		keyGen.initialize(1024, random);
 		return (keyGen.generateKeyPair());
 	}	
 	
