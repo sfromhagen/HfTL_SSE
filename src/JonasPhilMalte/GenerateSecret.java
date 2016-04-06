@@ -13,7 +13,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.util.Base64;
 
-public class generateSecret {
+public class GenerateSecret {
 	
 	public SecretKey neuesSecret() throws Exception {
 	

@@ -23,7 +23,7 @@ public class Verschluesseln {
 		// TODO Auto-generated method stub
 		
 		// 1. SecretKey generieren
-			generateSecret sKey = new generateSecret();
+			GenerateSecret sKey = new GenerateSecret();
 			SecretKey sKey_temp = sKey.neuesSecret();
 		
 		// 2. String mittels Secret verschluesseln & in Datei speichern
