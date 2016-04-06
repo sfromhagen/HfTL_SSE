@@ -8,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.crypto.KeyAgreement;
+import javax.crypto.SecretKey;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.xml.bind.DatatypeConverter;
@@ -43,28 +44,6 @@ public class KeyExClientSession implements Runnable{
         receive_handshake(); 
     }
     
-//    private void genKeyPair() {
-//        
-//   	 System.out.println("Server: Generate DH keypair ...");
-//   	 
-//		try {
-//			
-//			KeyPairGenerator clientKpairGen;
-//			clientKpairGen = KeyPairGenerator.getInstance("DH");
-//			clientKpairGen.initialize(dhSpec);
-//			clientKpair = clientKpairGen.generateKeyPair();
-//	    	 
-//		} catch (NoSuchAlgorithmException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (InvalidAlgorithmParameterException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//   	 
-//		//System.out.println("Client: PublicKey:  "+serverKpair.getPublic().toString());
-//			
-//   }
 
     private void receive_handshake() {
     	try{
@@ -83,18 +62,20 @@ public class KeyExClientSession implements Runnable{
     		 clientKpairGen.initialize(dhParamSpec);
     		 KeyPair clientKpair = clientKpairGen.generateKeyPair();
 
-    		 // client creates and initializes his DH KeyAgreement object
-    		 System.out.println("BOB: Initialization ...");
-    		 KeyAgreement clientKeyAgree = KeyAgreement.getInstance("DH");
-    		 clientKeyAgree.init(clientKpair.getPrivate());
-
     		 // client encodes his public key, and sends it over to the server.
     		 connectionObject.output.println(ToHexString(clientKpair.getPublic().getEncoded()));
     		 
+    		     		 // client creates and initializes his DH KeyAgreement object
+    		 System.out.println("Client: Initialization ...");
+    		 KeyAgreement clientKeyAgree = KeyAgreement.getInstance("DH");
+    		 clientKeyAgree.init(clientKpair.getPrivate());
+    		 
     		 clientKeyAgree.doPhase(serverPublicKey, true);
     		 
-    		 byte[] clientSharedSecret = clientKeyAgree.generateSecret();
-    		 System.out.println(ToHexString(clientSharedSecret));
+    		 //byte[] clientSharedSecret = clientKeyAgree.generateSecret("AES");
+    		 
+    		 SecretKey clientSharedSecret = clientKeyAgree.generateSecret("AES");
+    		 System.out.println(ToHexString(clientSharedSecret.getEncoded()));
     		 
     	} catch (Exception e){
     		e=e;

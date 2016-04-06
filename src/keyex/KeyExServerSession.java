@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.crypto.KeyAgreement;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.xml.bind.DatatypeConverter;
 
@@ -28,6 +29,7 @@ public class KeyExServerSession implements Runnable{
     private KeyExConnection connectionObject;
     private DHParameterSpec dhSpec;
     private KeyPair serverKpair; 
+   // private Shared
     
     public void setConnection(KeyExConnection object){
         this.connectionObject = object;
@@ -65,7 +67,7 @@ public class KeyExServerSession implements Runnable{
 			    AlgorithmParameters params = paramGen.generateParameters();
 			    dhSpec =
 			    (DHParameterSpec) params.getParameterSpec(DHParameterSpec.class);
-			    System.out.println("" + dhSpec.getP() + "," + dhSpec.getG() + "," + dhSpec.getL());		    
+			    System.out.println("" + dhSpec.getP() + "," + dhSpec.getG() + "," + dhSpec.getL());	
 		    }
 	    }
 	    catch (Exception e) {
@@ -117,15 +119,16 @@ public class KeyExServerSession implements Runnable{
     		PublicKey clientPublicKey = serverKeyFac.generatePublic(x509KeySpec);
             
     		// KeyAgreement nach DH. derive the SharedSecret from own PrivKey and remote PubKey
-    		 System.out.println("ALICE: Initialization ...");
+    		 System.out.println("Server: Initialization ...");
     		 KeyAgreement serverKeyAgree = KeyAgreement.getInstance("DH");
     		 serverKeyAgree.init(serverKpair.getPrivate());
 
     		serverKeyAgree.doPhase(clientPublicKey, true);
     		
-    		// save shared sec as byte value
-    		byte[] serverSharedSecret = serverKeyAgree.generateSecret();
-   		    System.out.println(ToHexString(serverSharedSecret));
+    		// save shared sec as byte value, for AES
+    		//byte[] serverSharedSecret = serverKeyAgree.generateSecret();
+    		SecretKey serverSharedSecret = serverKeyAgree.generateSecret("AES");
+   		    System.out.println(ToHexString(serverSharedSecret.getEncoded()));
    		 
             
         }
