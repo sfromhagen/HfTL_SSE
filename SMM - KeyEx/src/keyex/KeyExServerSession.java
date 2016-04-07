@@ -3,14 +3,21 @@ package keyex;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyAgreement;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
 import java.security.KeyPairGenerator;
@@ -19,21 +26,36 @@ import java.security.PublicKey;
 import java.security.AlgorithmParameterGenerator;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.SecureRandom;
 import java.security.spec.X509EncodedKeySpec;
 
+
+/**
+ * This class implements the server side behaviour of the KeyEx system. 
+ * @author  Michael Stegemann, Sören Fromhagen, Manfred Kops
+ * @version 1.0, April 2016
+ */
 public class KeyExServerSession implements Runnable{
 
     private KeyExConnection connectionObject;
     private DHParameterSpec dhSpec;
     private KeyPair serverKpair; 
+    private SecretKey serverSharedSecret;
    // private Shared
     
+    
+    /**
+	 * Pushes an item on to the top of this stack. 
+	 * @param   object   the connection object to be used.
+	 */
     public void setConnection(KeyExConnection object){
         this.connectionObject = object;
     } 
+    
+    
     @Override
     public void run() {
     	
@@ -49,7 +71,9 @@ public class KeyExServerSession implements Runnable{
     	
     	//
     	keyAgreement(); 
-        
+    	
+    	String plaintext = receivePayload();
+    	System.out.println("Plaintext: "+ plaintext);
         // Close all sockets and make sure connectionObject is ready to close
         clean_up(); 
     }
@@ -107,11 +131,11 @@ public class KeyExServerSession implements Runnable{
 
         try {
         	
-            connectionObject.output.println(ToHexString(serverKpair.getPublic().getEncoded()));
+            connectionObject.output.println(toHexString(serverKpair.getPublic().getEncoded()));
             
             
             // receive PublicKey from the Client (Byte data in one line)
-            byte[] clientPublicKeyEnc = ToByteArray(connectionObject.input.readLine());
+            byte[] clientPublicKeyEnc = toByteArray(connectionObject.input.readLine());
     		
             // decode the PublicKey
     		KeyFactory serverKeyFac = KeyFactory.getInstance("DH");
@@ -127,8 +151,17 @@ public class KeyExServerSession implements Runnable{
     		
     		// save shared sec as byte value, for AES
     		//byte[] serverSharedSecret = serverKeyAgree.generateSecret();
-    		SecretKey serverSharedSecret = serverKeyAgree.generateSecret("AES");
-   		    System.out.println(ToHexString(serverSharedSecret.getEncoded()));
+    		serverSharedSecret = serverKeyAgree.generateSecret("AES");
+    		
+    		
+    		
+    		System.out.println(toHexString(serverSharedSecret.getEncoded()));
+    	//	SecretKeyFactory fac = SecretKeyFactory.getInstance("AES");
+    	//	serverSharedSecret = fac.translateKey(serverSharedSecret);
+    		
+    		serverSharedSecret = new SecretKeySpec(serverSharedSecret.getEncoded(),0,16,"AES");
+    		
+    		System.out.println(toHexString(serverSharedSecret.getEncoded()));
    		 
             
         }
@@ -136,16 +169,41 @@ public class KeyExServerSession implements Runnable{
             System.out.println("error!" + e.getMessage());
         }  
     }
+    
+    private String receivePayload() {
+    	
+    	byte[] decipheredText=null;
+    	Cipher aesCipher;
+    	
+    	try {
+			
+    		aesCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			aesCipher.init(Cipher.DECRYPT_MODE, serverSharedSecret);
+			
+	    	byte[] cipherTextEnc = toByteArray(connectionObject.input.readLine());
+	    	decipheredText = aesCipher.doFinal(cipherTextEnc);
+    		
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+    	   	
+    	String plaintext = new String(decipheredText);
+    	
+    	return plaintext;
+    }
+    
+    
     private void clean_up() {
 
         connectionObject.prepareStreams();
     }
    
     //Hilfsfunktion vor versenden der Daten um keine Steuerzeichen o.Ä. im Pub-Key zu haben
-    public static String ToHexString(byte[] array){
+    public static String toHexString(byte[] array){
       return DatatypeConverter.printHexBinary(array);
     }
-    public static byte[] ToByteArray(String s){
+    public static byte[] toByteArray(String s){
         return DatatypeConverter.parseHexBinary(s);
     }
     
