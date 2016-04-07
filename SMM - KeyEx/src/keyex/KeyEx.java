@@ -1,8 +1,6 @@
 package keyex;
 
 import java.io.File;
-import java.io.FileInputStream;
-import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
@@ -12,30 +10,31 @@ import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.Arrays;
-import java.util.ArrayList;
 
+
+/**
+ * This class implements the client side behaviour of the KeyEx system. 
+ * @author  Michael Stegemann, Sören Fromhagen, Manfred Kops
+ * @version 1.0, April 2016
+ */
 public class KeyEx{
 
-    protected static HashMap<String, String> types = new HashMap<String, String>();
-    protected static int globalSessionID;
     protected static int debugLevel;
-    protected static String docPath;
-    protected static int delay;
     protected static InetAddress Interface;
     protected static int Port;
+    
+    /**
+     * Enumeration listing the possible run modes of the application.
+     */
     public enum runModes {
         SERVER, CLIENT
     }
     protected static runModes runMode;
 
-
-    public static void main(String[] args) throws IOException{
+    /**
+     * Main method of the package. Parses command line options by using joptsimple and starts a client or server thread, based on the configuration.
+     */
+	public static void main(String[] args) throws IOException{
              
         System.out.println("Key Exchange System v.1\n Programmed by SMM\n");
 
@@ -120,7 +119,7 @@ public class KeyEx{
                     KeyExServerSession runnable = new KeyExServerSession();
                     
                     // hold all metadata of the connection
-                    KeyExConnection connectionObject = new KeyExConnection(globalSessionID,connectionsocket);
+                    KeyExConnection connectionObject = new KeyExConnection(connectionsocket);
                     
                     // handoff the socket data to the worker thread and start it
                     runnable.setConnection(connectionObject);
@@ -148,18 +147,12 @@ public class KeyEx{
                 return;
             }
     		
-    		KeyExConnection connectionObject = new KeyExConnection(globalSessionID, connectionSocket);
+    		KeyExConnection connectionObject = new KeyExConnection(connectionSocket);
 	
     		KeyExClientSession runnable = new KeyExClientSession();
     		runnable.setConnection(connectionObject);
             new Thread(runnable).start();
     	}
-    	
-        
-       
-        
-        
-        
     }
 } 
 

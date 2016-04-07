@@ -1,36 +1,24 @@
 package keyex;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyAgreement;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
 import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.Signature;
 import java.security.AlgorithmParameterGenerator;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.SecureRandom;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 
 
 /**
@@ -43,55 +31,64 @@ public class KeyExServerSession implements Runnable{
     private KeyExConnection connectionObject;
     private DHParameterSpec dhSpec;
     private KeyPair serverKpair; 
+    private PublicKey clientPublicKey;
     private SecretKey serverSharedSecret;
-   // private Shared
-    
+  
     
     /**
-	 * Pushes an item on to the top of this stack. 
-	 * @param   object   the connection object to be used.
+	 * Sets the connection this server shall communicate with
+	 * @param   object   the connection object to be used by this server session.
 	 */
     public void setConnection(KeyExConnection object){
         this.connectionObject = object;
     } 
     
-    
+    /**
+	 * Main method of the server session. Invoked as thread to allow multiple connections.
+	 */
     @Override
     public void run() {
     	
     	connectionObject.prepareStreams();
-    	
-    	System.out.println("\nIm a server doing server stuff");
-    	
-    	// We need to come up with fresh Diffie Hellman (DH) Parameters 
+
+    	// We need to come up with fresh Diffie-Hellman (DH) Parameters 
     	initialize_DH();
         
-    	// 
-    	genKeyPair();
-    	
-    	//
+     	genKeyPair();
     	keyAgreement(); 
     	
     	String plaintext = receivePayload();
-    	System.out.println("Plaintext: "+ plaintext);
-        // Close all sockets and make sure connectionObject is ready to close
+    
+    	if (plaintext != ""){
+    		System.out.println("Plaintext: "+ plaintext);
+    	}
+    	// Close all sockets and make sure connectionObject is ready to close
         clean_up(); 
     }
     
+    /**
+	 * Used to generate Diffie-Hellman Parameters P,G and L
+	 */
     private void initialize_DH() {
 	
 	    int mode = 0;
 	    try {
 		    if (mode == 0) {
 			    // Some central authority creates new DH parameters
-			    System.out.println("Creating Diffie-Hellman parameters ...");
+		    	if(KeyEx.debugLevel >=1){
+		    		System.out.println("Creating Diffie-Hellman parameters ...");
+		    	}
+		    	
 			    AlgorithmParameterGenerator paramGen =
 			    AlgorithmParameterGenerator.getInstance("DH");
 			    paramGen.init(512);
 			    AlgorithmParameters params = paramGen.generateParameters();
 			    dhSpec =
 			    (DHParameterSpec) params.getParameterSpec(DHParameterSpec.class);
-			    System.out.println("" + dhSpec.getP() + "," + dhSpec.getG() + "," + dhSpec.getL());	
+			    
+			    if(KeyEx.debugLevel >=2){
+			    	System.out.println("" + dhSpec.getP() + "," + dhSpec.getG() + "," + dhSpec.getL());	
+			    }
 		    }
 	    }
 	    catch (Exception e) {
@@ -99,15 +96,21 @@ public class KeyExServerSession implements Runnable{
 	    	e.printStackTrace();
 	    }
 	    finally{
-	    	System.out.println("DH parameters successfully generated.");
+	    	if(KeyEx.debugLevel >=1){
+	    		System.out.println("DH parameters successfully generated.");
+	    	}
 	    }
 	    
     }
-    
+   
+    /**
+	 * Used to generate Diffie-Hellman keypair, based on parameters of dhSpec 
+	 */
     private void genKeyPair() {
     
-    	 System.out.println("Server: Generate DH keypair ...");
-    	 
+    	if(KeyEx.debugLevel >=1){
+    		System.out.println("Server: Generate DH keypair ...");
+    	}
 		try {
 			
 			KeyPairGenerator serverKpairGen;
@@ -115,18 +118,18 @@ public class KeyExServerSession implements Runnable{
 			serverKpairGen.initialize(dhSpec);
 			serverKpair = serverKpairGen.generateKeyPair();
 	    	 
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidAlgorithmParameterException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-    	 
-		System.out.println("Server: PublicKey:  "+serverKpair.getPublic().toString());
+		if(KeyEx.debugLevel >=2){
+			System.out.println("Server: PublicKey:  "+serverKpair.getPublic().toString());
+		}
 			
     }
     
+    /**
+	 * Transfers own Public Key to the client and performs the Key Agreement resulting in a secret key for usage with symmetric ciphers
+	 */
     private void keyAgreement() {
 
         try {
@@ -140,29 +143,24 @@ public class KeyExServerSession implements Runnable{
             // decode the PublicKey
     		KeyFactory serverKeyFac = KeyFactory.getInstance("DH");
     		X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(clientPublicKeyEnc);
-    		PublicKey clientPublicKey = serverKeyFac.generatePublic(x509KeySpec);
+    		clientPublicKey = serverKeyFac.generatePublic(x509KeySpec);
             
     		// KeyAgreement nach DH. derive the SharedSecret from own PrivKey and remote PubKey
-    		 System.out.println("Server: Initialization ...");
+    		if(KeyEx.debugLevel >=1){ 
+    			System.out.println("Server: Initialization ...");
+    		} 
     		 KeyAgreement serverKeyAgree = KeyAgreement.getInstance("DH");
     		 serverKeyAgree.init(serverKpair.getPrivate());
 
     		serverKeyAgree.doPhase(clientPublicKey, true);
     		
     		// save shared sec as byte value, for AES
-    		//byte[] serverSharedSecret = serverKeyAgree.generateSecret();
     		serverSharedSecret = serverKeyAgree.generateSecret("AES");
-    		
-    		
-    		
-    		System.out.println(toHexString(serverSharedSecret.getEncoded()));
-    	//	SecretKeyFactory fac = SecretKeyFactory.getInstance("AES");
-    	//	serverSharedSecret = fac.translateKey(serverSharedSecret);
-    		
     		serverSharedSecret = new SecretKeySpec(serverSharedSecret.getEncoded(),0,16,"AES");
     		
-    		System.out.println(toHexString(serverSharedSecret.getEncoded()));
-   		 
+    		if(KeyEx.debugLevel >=2){
+    			System.out.println(toHexString(serverSharedSecret.getEncoded()));
+    		}
             
         }
         catch (Exception e) {
@@ -170,10 +168,14 @@ public class KeyExServerSession implements Runnable{
         }  
     }
     
+    /**
+	 * Receives (symmetrically) encrypted payload from the client and deciphers it with the serverSharedSecret 
+	 */
     private String receivePayload() {
     	
     	byte[] decipheredText=null;
     	Cipher aesCipher;
+    	String plainText = "";
     	
     	try {
 			
@@ -182,27 +184,54 @@ public class KeyExServerSession implements Runnable{
 			
 	    	byte[] cipherTextEnc = toByteArray(connectionObject.input.readLine());
 	    	decipheredText = aesCipher.doFinal(cipherTextEnc);
-    		
+	    	
+	    	MessageDigest md = MessageDigest.getInstance("SHA-256");
+	    	byte[] computedDigest = md.digest(decipheredText); 
+	    	
+	    	
+	    	byte[] receivedDigest = toByteArray(connectionObject.input.readLine());
+	    	
+	    	if(KeyEx.debugLevel >=2){
+    			System.out.println(toHexString(computedDigest));
+    			System.out.println(toHexString(receivedDigest));
+    		}
+	    	
+    		if (Arrays.equals(computedDigest, receivedDigest)){
+    			System.out.println("Signature for the following message is valid:");
+    			plainText = new String(decipheredText);
+    		}else{
+    			System.out.println("Signature invalid. Dropping message as faked.");
+    			plainText = "";
+    		}	
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
-    	   	
-    	String plaintext = new String(decipheredText);
-    	
-    	return plaintext;
+
+    	return plainText;
     }
     
-    
+    /**
+	 * Closes the connection associated with this server session 
+	 */
     private void clean_up() {
 
         connectionObject.prepareStreams();
     }
    
-    //Hilfsfunktion vor versenden der Daten um keine Steuerzeichen o.Ä. im Pub-Key zu haben
+    /**
+	 * Helper function to encode a byte array into Hex String 
+	 * @param   array   the byte array to be converted to a Hex String
+	 * @return  The input array encoded in Hex
+	 */
     public static String toHexString(byte[] array){
       return DatatypeConverter.printHexBinary(array);
     }
+    /**
+   	 * Helper function to encode a String into byte array 
+   	 * @param   s   the Hex String to be converted to a byte array
+   	 * @return  The input Hex String decoded into a byte array
+   	 */
     public static byte[] toByteArray(String s){
         return DatatypeConverter.parseHexBinary(s);
     }

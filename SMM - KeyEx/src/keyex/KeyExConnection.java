@@ -1,38 +1,37 @@
 package keyex;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import javax.xml.bind.DatatypeConverter;
-
-/*
- * @author: Michael Stegemann <m.stegemann_beng-tki2009k@t-online.de>
- * @version 1.0
+/**
+ * This helper-class encapsulates the socket connection to the remote party
+ * @author  Michael Stegemann, Sören Fromhagen, Manfred Kops
+ * @version 1.0, April 2016
  */
-
 public class KeyExConnection {
     
     protected int sessionID;
     protected Socket connectionSocket;
     protected BufferedReader input;
     protected PrintWriter output;
-    protected Integer contentLength = 0;
-    protected String contentType = "text/html";
-    protected String accept;
-    protected String path;
 
-    KeyExConnection(int sessionID, Socket connectionsocket){
-        this.sessionID = sessionID;
+    /**
+     * Constructs a connection object from this socket
+     * @param   connectionsocket   the socket to derive Input/Outputstreams from 
+     */
+    KeyExConnection(Socket connectionsocket){
         this.connectionSocket = connectionsocket;
     } 
     
+    /**
+     * Derives convenient write/read handles to transfer data to the remote party
+     */
     public void prepareStreams(){
         try
         {   
-            //Vorbereitung der Streams
+            //Preparing streams
             input =
                 new BufferedReader(new InputStreamReader(connectionSocket.
                 getInputStream()));
@@ -46,6 +45,9 @@ public class KeyExConnection {
         }
     } 
     
+    /**
+     * Closes the socket associated with this connection.
+     */
     public void closeStreams(){
         try
         {   
