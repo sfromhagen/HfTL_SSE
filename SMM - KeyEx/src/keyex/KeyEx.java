@@ -14,7 +14,7 @@ import java.net.Socket;
 
 /**
  * This class implements the client side behaviour of the KeyEx system. 
- * @author  Michael Stegemann, Sören Fromhagen, Manfred Kops
+ * @author  Michael Stegemann, Soeren Fromhagen, Manfred Kops
  * @version 1.0, April 2016
  */
 public class KeyEx{

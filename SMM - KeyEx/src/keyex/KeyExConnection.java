@@ -7,7 +7,7 @@ import java.net.Socket;
 
 /**
  * This helper-class encapsulates the socket connection to the remote party
- * @author  Michael Stegemann, Sören Fromhagen, Manfred Kops
+ * @author  Michael Stegemann, Soeren Fromhagen, Manfred Kops
  * @version 1.0, April 2016
  */
 public class KeyExConnection {

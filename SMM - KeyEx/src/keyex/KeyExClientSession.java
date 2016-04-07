@@ -11,14 +11,13 @@ import javax.xml.bind.DatatypeConverter;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.PublicKey;
-import java.security.Signature;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.spec.X509EncodedKeySpec;
 
 /**
  * This class implements the client side behaviour of the KeyEx system. 
- * @author  Michael Stegemann, Sören Fromhagen, Manfred Kops
+ * @author  Michael Stegemann, Soeren Fromhagen, Manfred Kops
  * @version 1.0, April 2016
  */
 public class KeyExClientSession implements Runnable{

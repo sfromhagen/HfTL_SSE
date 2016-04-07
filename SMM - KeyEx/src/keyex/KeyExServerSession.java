@@ -9,12 +9,9 @@ import javax.xml.bind.DatatypeConverter;
 
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.Signature;
 import java.security.AlgorithmParameterGenerator;
 import java.security.AlgorithmParameters;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.spec.X509EncodedKeySpec;
@@ -23,7 +20,7 @@ import java.util.Arrays;
 
 /**
  * This class implements the server side behaviour of the KeyEx system. 
- * @author  Michael Stegemann, Sören Fromhagen, Manfred Kops
+ * @author  Michael Stegemann, Soeren Fromhagen, Manfred Kops
  * @version 1.0, April 2016
  */
 public class KeyExServerSession implements Runnable{
