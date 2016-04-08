@@ -1,18 +1,15 @@
-package JonasPhilMalte;
+package keyexchange_crypto;
 /**
  * 
  */
 
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
-import java.io.FileInputStream;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 
 public class Verschluesseln {
 
@@ -23,8 +20,12 @@ public class Verschluesseln {
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 		
-		// Person A: 1. KeyPair für asymm. Verschluesselung generieren & 
-		//    PublicKey in Datei speichern für Schlüsselaustausch
+		
+		
+		
+		
+		  // Person A: 1. KeyPair für asymm. Verschluesselung generieren & 
+		 //    PublicKey in Datei speichern für Schlüsselaustausch
 			GenerateKeypair keyPairGen = new GenerateKeypair();
 			KeyPair keyPair = keyPairGen.neuesKeypair();
 			
@@ -75,6 +76,8 @@ public class Verschluesseln {
 			byte[] receivedencryptedString = reader.readFromFile("EncryptedText_from_B");
 			byte[] decryptedString = decrypter.decryptSymmetric(receivedencryptedString, decryptedsKey);
 			System.out.println(new String(decryptedString));
+			
+		
 	}
 
 }

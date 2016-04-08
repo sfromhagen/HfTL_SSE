@@ -1,4 +1,4 @@
-package JonasPhilMalte;
+package keyexchange_crypto;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.SecureRandom;

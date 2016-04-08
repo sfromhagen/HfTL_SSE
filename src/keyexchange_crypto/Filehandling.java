@@ -1,4 +1,4 @@
-package JonasPhilMalte;
+package keyexchange_crypto;
 
 import java.io.FileOutputStream;
 import java.io.FileWriter;
