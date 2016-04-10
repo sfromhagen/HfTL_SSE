@@ -88,7 +88,10 @@ class ClientConn implements Runnable {
         
         public String processInput(String theInput) {
             String theOutput = null;
-     
+            
+            if (theInput.matches("Test")){
+            	theOutput = "Test geklappt.";
+            }
             /** if (state == WAITING) {
                 theOutput = "Knock! Knock!";
                 state = SENTKNOCKKNOCK;
@@ -127,7 +130,7 @@ class ClientConn implements Runnable {
             
             */
             
-            return "Test";
+            return theOutput;
         }
         
     }
@@ -141,14 +144,17 @@ class ClientConn implements Runnable {
              * sent back to the client */
             while ((msg = in.readLine()) != null) {
                 response = protocol.processInput(msg);
-                out.println("SERVER: " + response);
+                if (response != null) { 
+                	out.println("SERVER: " + response);
+                }
             }
         } catch (IOException e) {
             System.err.println(e);
         }
     }
   
-    public void sendMsg(String msg) {
+    /*public void sendMsg(String msg) {
         out.println(msg);
     }
+    */
 }
