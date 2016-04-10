@@ -89,9 +89,7 @@ class ClientConn implements Runnable {
         public String processInput(String theInput) {
             String theOutput = null;
             
-            if (theInput.matches("Test")){
-            	theOutput = "Test geklappt.";
-            }
+            
             /** if (state == WAITING) {
                 theOutput = "Knock! Knock!";
                 state = SENTKNOCKKNOCK;
@@ -129,7 +127,7 @@ class ClientConn implements Runnable {
             }
             
             */
-            
+            System.out.println(theInput);
             return theOutput;
         }
         
