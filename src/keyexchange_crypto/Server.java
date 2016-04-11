@@ -6,6 +6,14 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
 
 public class Server {
 	
@@ -37,14 +45,16 @@ public class Server {
 	            t.start();
 	        }
 	    }
-	    
-	    
 }
 
 class ClientConn implements Runnable {
     private Socket client;
     private BufferedReader in = null;
     private PrintWriter out = null;
+    private byte[] publicKey;
+    private byte[] privateKey;
+    byte[] receivedencryptedsKey;
+    byte[] decryptedsKey_byte;
   
     ClientConn(Socket client) {
         this.client = client;
@@ -60,99 +70,109 @@ class ClientConn implements Runnable {
         }
     }
     
-    public class ServerProtocol {
-    	private ClientConn conn;
-    	
-    	//Hier müssen noch die ganzen KeyPairs etc. gespeichert werden.
-    	
-    	private static final int WAITING = 0;
-        private static final int SENTKNOCKKNOCK = 1;
-        private static final int SENTCLUE = 2;
-        private static final int ANOTHER = 3;
-     
-        private static final int NUMJOKES = 5;
-     
-        private int state = WAITING;
-        private int currentJoke = 0;
-     
-        private String[] clues = { "Turnip", "Little Old Lady", "Atch", "Who", "Who" };
-        private String[] answers = { "Turnip the heat, it's cold in here!",
-                                     "I didn't know you could yodel!",
-                                     "Bless you!",
-                                     "Is there an owl in here?",
-                                     "Is there an echo in here?" };
-     
-        public ServerProtocol(ClientConn c) {
-            conn = c;
-        }
-        
-        public String processInput(String theInput) {
-            String theOutput = null;
-            
-            
-            /** if (state == WAITING) {
-                theOutput = "Knock! Knock!";
-                state = SENTKNOCKKNOCK;
-            } else if (state == SENTKNOCKKNOCK) {
-                if (theInput.equalsIgnoreCase("Who's there?")) {
-                    theOutput = clues[currentJoke];
-                    state = SENTCLUE;
-                } else {
-                    theOutput = "You're supposed to say \"Who's there?\"! " +
-                    "Try again. Knock! Knock!";
-                }
-            } else if (state == SENTCLUE) {
-                if (theInput.equalsIgnoreCase(clues[currentJoke] + " who?")) {
-                    theOutput = answers[currentJoke] + " Want another? (y/n)";
-                    state = ANOTHER;
-                } else {
-                    theOutput = "You're supposed to say \"" + 
-                    clues[currentJoke] + 
-                    " who?\"" + 
-                    "! Try again. Knock! Knock!";
-                    state = SENTKNOCKKNOCK;
-                }
-            } else if (state == ANOTHER) {
-                if (theInput.equalsIgnoreCase("y")) {
-                    theOutput = "Knock! Knock!";
-                    if (currentJoke == (NUMJOKES - 1))
-                        currentJoke = 0;
-                    else
-                        currentJoke++;
-                    state = SENTKNOCKKNOCK;
-                } else {
-                    theOutput = "Bye.";
-                    state = WAITING;
-                }
-            }
-            
-            */
-            System.out.println(theInput);
-            return theOutput;
-        }
-        
-    }
   
     public void run() {
         String msg, response;
-        ServerProtocol protocol = new ServerProtocol(this);
+       
         try {
-            /* loop reading lines from the client which are processed 
-             * according to our protocol and the resulting response is 
-             * sent back to the client */
-            while ((msg = in.readLine()) != null) {
-                response = protocol.processInput(msg);
-                if (response != null) { 
-                	out.println("SERVER: " + response);
-                }
-            }
-        } catch (IOException e) {
+        	// Waiting on KeyExchange Request from Client
+        	msg = in.readLine();
+        	if (msg.matches("ReqKeyExchange")){
+        		System.out.println("KeyExchange from Client requested. KeyExchange beginning...");
+        		
+        		// Server generiert RSA KeyPair
+        		GenerateKeypair keyPairGen = new GenerateKeypair();
+				KeyPair keyPair = keyPairGen.neuesKeypair();
+				
+				publicKey = keyPair.getPublic().getEncoded();
+				privateKey = keyPair.getPrivate().getEncoded();
+				
+				// Server schickt RSA Public Key an Client
+				out.println(DatatypeConverter.printHexBinary(publicKey));
+				System.out.println("Public Key sent to Client...");
+				
+				// Server nimmt verschlüsselten symmetrischen Secret Key entgegen und entschlüsselt diesen mittels PrivateKey.
+				receivedencryptedsKey = DatatypeConverter.parseHexBinary(in.readLine());
+				System.out.println(new String(receivedencryptedsKey));
+				Crypto decrypter = new Crypto();
+				decryptedsKey_byte = decrypter.decryptAsymmetric(receivedencryptedsKey, keyPair.getPrivate());
+				SecretKey decryptedsKey = new SecretKeySpec(decryptedsKey_byte, 0, decryptedsKey_byte.length, "AES");
+				System.out.println("Secret Key erhalten. Ready for Secure Messaging.");
+		
+
+            	ClientConnSecureSend secureSending = new ClientConnSecureSend(out, decryptedsKey);
+            	Thread sendingThread = new Thread(secureSending);
+            	sendingThread.start();
+            	
+            	ClientConnSecureReceive secureReceiving = new ClientConnSecureReceive(in, decryptedsKey);
+            	Thread receivingThread = new Thread(secureReceiving);
+            	receivingThread.start();
+            	
+            	
+        	} else {
+        		out.println("Error: Request for KeyExchange expected.");
+        	};
+        	
+        } catch (Exception e) {
             System.err.println(e);
         }
     }
   
-    /*public void sendMsg(String msg) {
-        out.println(msg);
-    }
-    */
 }
+
+class ClientConnSecureSend implements Runnable{
+	private PrintWriter out = null;
+	private SecretKey sKey = null;
+	private static BufferedReader stdIn;
+	private String msg;
+	byte[] ciphertext;
+	public ClientConnSecureSend(PrintWriter out, SecretKey sKey){
+		this.out = out;
+		this.sKey = sKey;
+	}
+	
+	public void run(){
+		stdIn = new BufferedReader(new InputStreamReader(System.in));
+        /* loop reading messages from stdin and sending them to the Client */
+        try {
+			while ((msg = stdIn.readLine()) != null) {
+				Crypto encrypter = new Crypto();
+				ciphertext = encrypter.encryptSymmetric(msg.getBytes(), sKey);
+				out.println(DatatypeConverter.printHexBinary(ciphertext));
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+}
+
+class ClientConnSecureReceive implements Runnable{
+	private BufferedReader in = null;
+	private SecretKey sKey = null;
+	private String msg;
+	byte[] ciphertext;
+	
+	public ClientConnSecureReceive(BufferedReader in, SecretKey sKey){
+		this.in = in;
+		this.sKey = sKey;
+	}
+	
+	public void run(){
+		
+    	/* loop reading messages from the Client and show them 
+         * on stdout */
+        	 try {
+				while ((msg = in.readLine()) != null) {
+					Crypto decrypter = new Crypto();
+					ciphertext = decrypter.decryptSymmetric(msg.getBytes(), sKey);
+				    System.out.println(new String(ciphertext));
+				    }
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+            } 
+	}

@@ -80,6 +80,8 @@ class ServerConn implements Runnable {
 			// verschlüsselten symmetrischen Secret Key an Server.
 			Crypto encrypter = new Crypto();
 			byte[] encryptedsKey = encrypter.encryptAsymmetric(sKey.getEncoded(), pubKey);
+			System.out.println(new String(sKey.getEncoded()));
+			System.out.println(DatatypeConverter.printHexBinary(encryptedsKey));
 			out.println(DatatypeConverter.printHexBinary(encryptedsKey));
 
         	ServerConnSecureSend secureSending = new ServerConnSecureSend(out, sKey);
