@@ -11,18 +11,14 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 
-public class Verschluesseln {
+public class LokalVerschluesselnViaFile {
 
 	/**
 	 * @param args
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		// TODO Auto-generated method stub
-		
-		
-		
-		
+		// TODO Auto-generated method stub	
 		
 		  // Person A: 1. KeyPair für asymm. Verschluesselung generieren & 
 		 //    PublicKey in Datei speichern für Schlüsselaustausch

@@ -42,6 +42,8 @@ class ServerConn implements Runnable {
     private BufferedReader in = null;
     private PrintWriter out = null;
     public SecretKey sKey;
+    byte[] receivedPublicKey;
+    byte[] encryptedsKey;
   
     public ServerConn(Socket server) throws IOException {
 
@@ -65,25 +67,30 @@ class ServerConn implements Runnable {
 		
 			// Start of KeyExchange
         	out.println("ReqKeyExchange");
+        	System.out.println("Key Exchange Request sent to Server.");
+        	
         	// Reading Public Key from Server and save in PublicKey Object
         	msg = in.readLine();
-        	byte[] receivedPublicKey = DatatypeConverter.parseHexBinary(msg);
+        	receivedPublicKey = DatatypeConverter.parseHexBinary(msg);
+        	
 			KeyFactory kf_RSA = KeyFactory.getInstance("RSA");
 			X509EncodedKeySpec x509Spec = new X509EncodedKeySpec(receivedPublicKey);
 			PublicKey pubKey = kf_RSA.generatePublic(x509Spec);
+			System.out.println("Public Key from Server received.");
 			
 			// Client generiert symmetrischen Secret Key (AES) und speichert diesen in Variable.
 			GenerateSecret sKeyGen = new GenerateSecret();
 			SecretKey sKey = sKeyGen.neuesSecret();
+			System.out.println("Secret Key generated.");
 			
-			// Client verschlüsselt symmetrischen Secret Key mittels Public Key sendet 
+			// Client verschlüsselt symmetrischen Secret Key mittels Public Key und sendet 
 			// verschlüsselten symmetrischen Secret Key an Server.
 			Crypto encrypter = new Crypto();
-			byte[] encryptedsKey = encrypter.encryptAsymmetric(sKey.getEncoded(), pubKey);
-			System.out.println(new String(sKey.getEncoded()));
-			System.out.println(DatatypeConverter.printHexBinary(encryptedsKey));
+			encryptedsKey = encrypter.encryptAsymmetric(sKey.getEncoded(), pubKey);
 			out.println(DatatypeConverter.printHexBinary(encryptedsKey));
-
+			System.out.println("Encrypted Secret Key sent to Server.");
+			System.out.println("Ready for Secure Messaging.");
+			
         	ServerConnSecureSend secureSending = new ServerConnSecureSend(out, sKey);
         	Thread sendingThread = new Thread(secureSending);
         	sendingThread.start();
@@ -150,8 +157,8 @@ class ServerConnSecureReceive implements Runnable{
         	 try {
 				while ((msg = in.readLine()) != null) {
 					Crypto decrypter = new Crypto();
-					ciphertext = decrypter.decryptSymmetric(msg.getBytes(), sKey);
-				    System.out.println(new String(ciphertext));
+					ciphertext = decrypter.decryptSymmetric(DatatypeConverter.parseHexBinary(msg), sKey);
+				    System.out.println("Server: " + new String(ciphertext));
 				    }
 			} catch (Exception e) {
 				// TODO Auto-generated catch block

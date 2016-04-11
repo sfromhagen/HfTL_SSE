@@ -92,8 +92,8 @@ class ClientConn implements Runnable {
 				System.out.println("Public Key sent to Client...");
 				
 				// Server nimmt verschlüsselten symmetrischen Secret Key entgegen und entschlüsselt diesen mittels PrivateKey.
-				receivedencryptedsKey = DatatypeConverter.parseHexBinary(in.readLine());
-				System.out.println(new String(receivedencryptedsKey));
+				String test = in.readLine();
+				receivedencryptedsKey = DatatypeConverter.parseHexBinary(test);
 				Crypto decrypter = new Crypto();
 				decryptedsKey_byte = decrypter.decryptAsymmetric(receivedencryptedsKey, keyPair.getPrivate());
 				SecretKey decryptedsKey = new SecretKeySpec(decryptedsKey_byte, 0, decryptedsKey_byte.length, "AES");
@@ -167,8 +167,8 @@ class ClientConnSecureReceive implements Runnable{
         	 try {
 				while ((msg = in.readLine()) != null) {
 					Crypto decrypter = new Crypto();
-					ciphertext = decrypter.decryptSymmetric(msg.getBytes(), sKey);
-				    System.out.println(new String(ciphertext));
+					ciphertext = decrypter.decryptSymmetric(DatatypeConverter.parseHexBinary(msg), sKey);
+				    System.out.println("Client: " + new String(ciphertext));
 				    }
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
