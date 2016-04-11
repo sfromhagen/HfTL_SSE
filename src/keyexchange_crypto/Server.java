@@ -18,10 +18,14 @@ import javax.xml.bind.DatatypeConverter;
 public class Server {
 	
 
-	 private static int port = 13337; /* port to listen on */
+	 private static int port; /* port to listen on */
+	 private static BufferedReader stdIn;
 	  
 	    public static void main (String[] args) throws IOException {
-	  
+	    	stdIn = new BufferedReader(new InputStreamReader(System.in));
+			System.out.print("Bitte gewünschten Port des Servers eingeben: ");
+			port = Integer.parseInt(stdIn.readLine());
+			
 	        ServerSocket server = null;
 	        try {
 	            server = new ServerSocket(port); /* start listening on the port */
@@ -32,6 +36,7 @@ public class Server {
 	        }
 	  
 	        Socket client = null;
+	        System.out.println("Waiting for Client-Connections...");
 	        while(true) {
 	            try {
 	                client = server.accept();

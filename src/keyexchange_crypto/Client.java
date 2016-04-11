@@ -14,12 +14,17 @@ import javax.crypto.SecretKey;
 import javax.xml.bind.DatatypeConverter;
 
 public class Client {
-	private static int port = 13337; /* port to connect to */
+	private static int port; /* port to connect to */
 	private static String host;
+	private static BufferedReader stdIn;
 	
 	 public static void main (String[] args) throws IOException, Exception {
-		 Socket server = null;
-		  host = "localhost"; // args[0];
+		  stdIn = new BufferedReader(new InputStreamReader(System.in));
+		  System.out.print("Bitte IP-Adresse des Host eingeben: ");
+		  host = stdIn.readLine();
+		  System.out.print("Bitte Port des Host eingeben: ");
+		  port = Integer.parseInt(stdIn.readLine());
+		  Socket server = null;
 	        try {
 	            server = new Socket(host, port);
 	        } catch (UnknownHostException e) {
