@@ -1,1 +1,1 @@
-Member: Michael Manfred Sören 
+﻿Member: Malte Philipp Jonas 
