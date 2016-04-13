@@ -20,8 +20,8 @@ public class igsam {
 		
 		
 		
-		//connectCdd.login();
-		
+	//	connectCdd.login("HfTL-Group-2", "GehHeim1310");
+		connectCdd.addDevice("1337");
 		
 	}
 }
