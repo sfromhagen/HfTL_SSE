@@ -8,7 +8,7 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.util.Iterator;
 
-//import java.util.Base64;
+import java.util.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -20,52 +20,24 @@ public class cloudConnection {
 
 	//todo: read url from config file
 	private String url ="";
-	private HttpsURLConnection connection;
 	private String user;
 	private String password;
 	
 	public cloudConnection (String url) throws Exception{
 		this.url = url;
-		
-		//connect to url
-		
-		// http://www.programcreek.com/java-api-examples/javax.net.ssl.HttpsURLConnection
-		
-		  URL uploadUrl  = new URL(url);
-		  HttpsURLConnection connection = (HttpsURLConnection) uploadUrl.openConnection();
-		  
-//		 connection.setRequestMethod("GET");
-//		  connection.connect();
-//		  
-//		  BufferedReader inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
-//		  
-		  this.connection = connection;
-//		  
-//		  //test print response 
-//		  if (igsam.debugLevel == 3){
-//			  
-//			  String line = inputStream.readLine();
-//			  
-//			  while (line != null)
-//			  {  
-//				 System.out.println(line);
-//				 line = inputStream.readLine();
-//			  }
-//	
-//		  }// end if 
-//		  inputStream.close();
 	}
 	
 	
 	public void login (String user, String password){
-	
-	this.user = user;
-	this.password = password;
-		
+		this.user = user;
+		this.password = password;		
 	}
 	
-	public String getDevice (String tenantId) throws Exception{
+	public String getDevice (String serial) throws Exception{
 		
+		URL targetUrl  = new URL(igsam.url+"/identity/externalIds/c8y_Serial/"+serial);
+		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
+				
 		connection.setRequestMethod("GET");
 				
 		//todo: Base64 encoding 
@@ -88,20 +60,19 @@ public class cloudConnection {
 		
 		
 		JSONParser parser = new JSONParser();
-		  JSONObject jObj = null;
+		JSONObject jObj = null;
 
-			try {
+		try {
 				
-				StringBuilder sb = new StringBuilder();
-              String line = null;
-              while ((line = inputStream.readLine()) != null) {
-                  sb.append(line + "\n");
-              }
-              inputStream.close();
-              String json = sb.toString();
+			StringBuilder sb = new StringBuilder();
+			String line = null;
+            while ((line = inputStream.readLine()) != null) {
+            	sb.append(line + "\n");
+            }
+            inputStream.close();
+            String json = sb.toString();
               
-              jObj = (JSONObject)parser.parse(json);
-              //System.out.println(jObj.toJSONString());
+            jObj = (JSONObject)parser.parse(json);
 
 			}catch (Exception e){
 				e.printStackTrace();
@@ -117,6 +88,9 @@ public class cloudConnection {
 	
 	public String addDevice (String tenantId) throws Exception{
 	
+		URL targetUrl  = new URL(igsam.url+"inventory/managedObjects");
+		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
+		
 		connection.setRequestMethod("POST");
 		connection.setRequestProperty("Content-Type",
 				"application/vnd.com.nsn.cumulocity.managedObject+json; charset=UTF-8; ver=0.9");
@@ -171,7 +145,10 @@ public class cloudConnection {
 	}
 	
 
-	public String registerDevice (String tenantId) throws Exception{
+	public String registerDevice (String tenantId, String id) throws Exception{
+
+		URL targetUrl = new URL(igsam.url+"identity/globalIds/"+id+"/externalIds");
+		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
 		
 		connection.setRequestMethod("POST");
 		connection.setRequestProperty("Content-Type",
@@ -219,6 +196,9 @@ public class cloudConnection {
 	
 	
 	public String sendData (String tenantId, float value, String timestamp ) throws Exception{
+
+		URL targetUrl = new URL(igsam.url+"measurement/measurements");
+		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
 		
 		connection.setRequestMethod("POST");
 		connection.setRequestProperty("Content-Type",

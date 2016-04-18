@@ -1,7 +1,6 @@
 package igsam;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -10,42 +9,31 @@ public class igsam {
 
 	//todo read debug level via ini file
 	public static int debugLevel = 0;
+	public static String url = null;
 	
 	
 	public static void main(String[] args) throws Exception{
-		
-		
-		String serial = "1337";
-		
-		//todo read url via config file
-		String url2 = "https://cdm.ram.m2m.telekom.com/apps/devicemanagement/index.html";
-		String url = "https://cdm.ram.m2m.telekom.com/inventory/managedObjects";
-		
-		
-		String url3 = "https://cdm.ram.m2m.telekom.com/identity/externalIds/c8y_Serial/"+serial;
-		
-		
-		
+	
+		String serial = "4242";
+		url = "https://cdm.ram.m2m.telekom.com/";
+
 		cloudConnection connectCdd = new cloudConnection(url);
-		cloudConnection connectCddget = new cloudConnection(url3);
-		
-		
-	//	connectCdd.login("HfTL-Group-2", "GehHeim1310");
-		
+	
 		// 1337 -> Sensor-Serial | id -> assigned ID by CdD
-		String id = connectCddget.getDevice(serial);
+		String id = connectCdd.getDevice(serial);
 				
 		if (id == null){
 			id = connectCdd.addDevice(serial);
-			String url4 = "https://cdm.ram.m2m.telekom.com/identity/globalIds/"+id+"/externalIds";
-			cloudConnection connectCddreg = new cloudConnection(url4);
-			connectCddreg.registerDevice(serial);
+			connectCdd.registerDevice(serial, id);
 		}
+					
+		String strTime = getDateTimeStamp();
+		connectCdd.sendData(id,(float) 13.37,strTime);
+			
 		
-		//transmit first data
-		String url5 = "https://cdm.ram.m2m.telekom.com//measurement/measurements";
-		cloudConnection connectCddSendData = new cloudConnection(url5);
-		
+		System.out.println(id);
+	}
+	public static String getDateTimeStamp(){
 		// get Timestamp 2014-12-15T13:00:00.123
 		LocalDateTime timestamp = LocalDateTime.now();
 		
@@ -59,16 +47,7 @@ public class igsam {
 		String timeZoneString = String.format("+%02d:%02d", hours, minutes);
 		
 		// get timestamp 2014-12-15T13:00:00.123+02:00
-		String strTime = timestamp.toString()+timeZoneString;
-		
-				
-		connectCddSendData.sendData(id,(float) 13.37,strTime);
-			
-		
-		System.out.println(id);
-		
-		
-		
+		return timestamp.toString()+timeZoneString;
 		
 	}
 }
