@@ -218,4 +218,98 @@ public class cloudConnection {
 	}
 	
 	
+	public String sendData (String tenantId, float value, String timestamp ) throws Exception{
+		
+		connection.setRequestMethod("POST");
+		connection.setRequestProperty("Content-Type",
+				"application/vnd.com.nsn.cumulocity.measurement+json; charset=UTF-8;ver=0.9");
+		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.measurement+json; charset=UTF-8; ver=0.9");
+
+		connection.setRequestProperty("Authorization", "Basic SGZUTC1Hcm91cC0yOkdlaEhlaW0xMzEw");
+		connection.setDoOutput(true);
+		
+		
+//		"c8y_TemperatureMeasurement":{
+//			"T": {
+//				"value": 21.23,
+//				"unit":"C"
+//				}
+//		},
+//		"time": "2014-12-15T13:00:00.123+02:00",
+//		"source": {
+//			"id": "1231234"
+//			},
+//		"type":"c8y_PTCMeasurement"
+		
+		//ToDo Celsius in config file?!?!
+
+		JSONObject requestObj = new JSONObject();
+		JSONObject mainObj = new JSONObject();
+				
+		JSONObject tObj = new JSONObject();
+		
+		tObj.put("value", value);
+		tObj.put("unit", "C");
+		
+		mainObj.put("T", tObj);
+		
+		requestObj.put("c8y_TemperatureMeasurement", mainObj);
+		
+		requestObj.put("time", timestamp);
+		
+		JSONObject sourceObj = new JSONObject();
+		
+		sourceObj.put("id", tenantId);
+		
+		requestObj.put("source", sourceObj);
+		
+		requestObj.put("type", "c8y_PTCMeasurement");
+		
+		System.out.println(requestObj.toJSONString());
+
+		OutputStream out = connection.getOutputStream();
+		//out.write(body.getBytes("UTF-8"));
+		out.write(requestObj.toJSONString().getBytes("UTF-8"));
+		out.close();
+		
+		BufferedReader inputStream;
+		
+		if (connection.getResponseCode() == connection.HTTP_CREATED){
+			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
+			System.out.println("ACCEPTED");
+		}else{
+			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
+			System.out.println("DENY");
+		}
+		
+		
+		
+	 
+		
+		  JSONParser parser = new JSONParser();
+		  JSONObject jObj = null;
+		  
+			try {
+				
+				StringBuilder sb = new StringBuilder();
+                String line = null;
+                while ((line = inputStream.readLine()) != null) {
+                    sb.append(line + "\n");
+                }
+                inputStream.close();
+                String json = sb.toString();
+                
+                jObj = (JSONObject)parser.parse(json);
+
+			}catch (Exception e){
+				e.printStackTrace();
+			}
+			
+			return (String) jObj.get("id");
+	}
+	
+	
+	
+	
+	
 }
