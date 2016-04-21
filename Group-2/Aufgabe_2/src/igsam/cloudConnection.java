@@ -351,7 +351,56 @@ public class cloudConnection {
 		
 	}
 
+	public void updateAlarmStatus (String serverAlarmID, String alarmStatus ) throws Exception{	
+		
+		//String serverAlarmID = "";
+		
+		URL targetUrl = new URL(igsam.url+"/alarm/alarms/"+serverAlarmID);
+		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
+		
+		connection.setRequestMethod("PUT");
+		connection.setRequestProperty("Content-Type",
+				"application/vnd.com.nsn.cumulocity.alarm+json; charset=UTF-8;ver=0.9");
+		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.alarm+json; charset=UTF-8; ver=0.9");
+
+		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
+		connection.setDoOutput(true);
+		
+//		PUT /alarm/alarms/ID HTTP/1.1
+//		Content-Type: application/vnd.com.nsn.cumulocity.alarm+json
+//		Accept: application/vnd.com.nsn.cumulocity.alarm+json
+//		...
+//		{
+
+//		"status": "CLEARED",
+//		}
+
+		JSONObject requestObj = new JSONObject();
+		requestObj.put("status", alarmStatus);
+
+		
+		System.out.println(requestObj.toJSONString());
+
+		OutputStream out = connection.getOutputStream();
+		
+		out.write(requestObj.toJSONString().getBytes("UTF-8"));
+		out.close();
+		
+		BufferedReader inputStream;
+			
+		
+		if (connection.getResponseCode() == connection.HTTP_OK){
+			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
 	
+			System.out.println("ALARM_CLEARED, ID: " + serverAlarmID);
+		}else{
+			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
+			System.out.println("ERROR WHILE CLEAR ALARM, ID: "+ serverAlarmID);
+		}
+		
+		
+	}
+
 	
 	
 	

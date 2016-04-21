@@ -60,8 +60,14 @@ public class igsam {
 //		"status": "ACTIVE",
 //		"severity": "MAJOR",
 		
-		connectCdd.sendAlarms(id,"Tracker lost power",strTime,"c8y_PowerAlarm","ACTIVE","MAJOR");
+		String AlarmID;
+		AlarmID = connectCdd.sendAlarms(id,"Tracker lost power",strTime,"c8y_PowerAlarm","ACTIVE","MAJOR");
 		
+		//ToDO: GetAlarms -> Macht keine Sinn?! Last occurence ist doch auch wichtig?
+		
+		Thread.sleep(20000);
+			
+		connectCdd.updateAlarmStatus(AlarmID,"CLEARED");
 		
 		System.out.println(id);
 	}
