@@ -402,6 +402,72 @@ public class cloudConnection {
 	}
 
 	
+	public void sendEvent (String tenantId, float altValue,float lngValue,float latValue, String timestamp, String msg, String type) throws Exception{
+
+		URL targetUrl = new URL(igsam.url+"event/events");
+		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
+		
+		connection.setRequestMethod("POST");
+		connection.setRequestProperty("Content-Type",
+				"application/vnd.com.nsn.cumulocity.event+json; charset=UTF-8;ver=0.9");
+		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.event+json; charset=UTF-8; ver=0.9");
+
+		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
+		connection.setDoOutput(true);
+			
+//		 POST /event/events HTTP/1.1
+//		 Content-Type: application/vnd.com.nsn.cumulocity.event+json
+//		 ...	
+//		 {
+//		 	"source": { "id": "1197500" },
+//		 	"text": "Location updated",
+//		 	"time": "2013-07-19T09:07:22.598+02:00",
+//			"type": "queclink_GV200LocationUpdate",
+//		 	"c8y_Position": {
+//		 		"alt": 73.9,
+//		 		"lng": 6.151782,
+//		 		"lat": 51.211971
+//		 	}
+//		 }	
+		
+		JSONObject requestObj = new JSONObject();
+		JSONObject sourceObj = new JSONObject();
+		JSONObject posObj = new JSONObject();
+		
+		sourceObj.put("id", tenantId);
+		requestObj.put("source", sourceObj);
+		
+		requestObj.put("text", msg);	
+		requestObj.put("time", timestamp);
+		requestObj.put("type", type);
+		
+		posObj.put("alt", altValue);
+		posObj.put("lng", lngValue);
+		posObj.put("lat", latValue);
+		requestObj.put("c8y_Position", posObj);
+		
+		
+		System.out.println(requestObj.toJSONString());
+
+		OutputStream out = connection.getOutputStream();
+		
+		out.write(requestObj.toJSONString().getBytes("UTF-8"));
+		out.close();
+		
+		BufferedReader inputStream;
+		
+		if (connection.getResponseCode() == connection.HTTP_CREATED){
+			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
+			System.out.println("ACCEPTED");
+		}else{
+			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
+			System.out.println("DENY");
+		}
+		 
+	}
+	
+	
+
 	
 	
 }

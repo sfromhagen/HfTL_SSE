@@ -52,6 +52,7 @@ public class igsam {
 					
 		String strTime = getDateTimeStamp();
 		connectCdd.sendData(id,(float) 13.37,strTime);
+		connectCdd.sendEvent(id, (float) 73.9, (float) 6.151782, (float) 51.211971, strTime, "Location updated", "queclink_GV200LocationUpdate");
 			
 //		"source": { "id": "10400" },
 //		"text": "Tracker lost power",
