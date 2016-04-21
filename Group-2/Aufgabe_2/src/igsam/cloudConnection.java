@@ -4,11 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.ProtocolException;
 import java.net.URL;
-import java.util.Iterator;
-
-import java.util.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -18,14 +14,9 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class cloudConnection {
 
-	//todo: read url from config file
-	private String url ="";
-	private String user;
-	private String password;
 	private String encodedAuth;
 	
 	public cloudConnection (String url) throws Exception{
-		this.url = url;
 	}
 	
 	
@@ -38,28 +29,26 @@ public class cloudConnection {
 		
 		URL targetUrl  = new URL(igsam.url+"/identity/externalIds/c8y_Serial/"+serial);
 		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
-				
-		connection.setRequestMethod("GET");
-				
-		//todo: Base64 encoding 
-		//String encodedPassword = user + ":" + password;
-        //String encoded = Base64.
-        //connection.setRequestProperty("Authorization", "Basic "+encoded);
 		
+		//built request params
+		connection.setRequestMethod("GET");
 		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.externalId+json,application/vnd.com.nsn.cumulocity.error+json; charset=UTF-8;ver=0.9");
 
+		//send request to server
 		connection.connect();
 		
 		BufferedReader inputStream = null;
 		if (connection.getResponseCode() == connection.HTTP_OK){
+			//read response from server
 			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
 		}else{
+			//catch errors
 			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
 		}
 		
 		
-		
+		//response is JSON objects, initialise parser
 		JSONParser parser = new JSONParser();
 		JSONObject jObj = null;
 
@@ -72,7 +61,8 @@ public class cloudConnection {
             }
             inputStream.close();
             String json = sb.toString();
-              
+            //now JSON response from server is in string json
+            
             jObj = (JSONObject)parser.parse(json);
 
 			}catch (Exception e){
@@ -196,7 +186,7 @@ public class cloudConnection {
 	}
 	
 	
-	public String sendData (String tenantId, float value, String timestamp ) throws Exception{
+	public void sendData (String tenantId, float value, String timestamp ) throws Exception{
 
 		URL targetUrl = new URL(igsam.url+"measurement/measurements");
 		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
@@ -209,7 +199,7 @@ public class cloudConnection {
 		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setDoOutput(true);
 		
-		
+//	{
 //		"c8y_TemperatureMeasurement":{
 //			"T": {
 //				"value": 21.23,
@@ -221,7 +211,7 @@ public class cloudConnection {
 //			"id": "1231234"
 //			},
 //		"type":"c8y_PTCMeasurement"
-		
+//	}
 		//ToDo Celsius in config file?!?!
 
 		JSONObject requestObj = new JSONObject();
@@ -249,45 +239,23 @@ public class cloudConnection {
 		System.out.println(requestObj.toJSONString());
 
 		OutputStream out = connection.getOutputStream();
-		//out.write(body.getBytes("UTF-8"));
+		
 		out.write(requestObj.toJSONString().getBytes("UTF-8"));
 		out.close();
 		
 		BufferedReader inputStream;
 		
 		if (connection.getResponseCode() == connection.HTTP_CREATED){
-			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
+			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
 			System.out.println("ACCEPTED");
 		}else{
-			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
+			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
 			System.out.println("DENY");
 		}
-		
-		
-		
-	 
-		
-		  JSONParser parser = new JSONParser();
-		  JSONObject jObj = null;
-		  
-			try {
-				
-				StringBuilder sb = new StringBuilder();
-                String line = null;
-                while ((line = inputStream.readLine()) != null) {
-                    sb.append(line + "\n");
-                }
-                inputStream.close();
-                String json = sb.toString();
-                
-                jObj = (JSONObject)parser.parse(json);
-
-			}catch (Exception e){
-				e.printStackTrace();
-			}
-			
-			return (String) jObj.get("id");
+		 
 	}
+	
+	
 	
 	
 	
