@@ -255,8 +255,102 @@ public class cloudConnection {
 		 
 	}
 	
-	
-	
+
+	public String sendAlarms (String tenantId, String alarmText, String timestamp, String alarmType, String alarmStatus, String alarmSeverity ) throws Exception{	
+		
+		String serverAlarmID = "";
+		
+		URL targetUrl = new URL(igsam.url+"/alarm/alarms");
+		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
+		
+		connection.setRequestMethod("POST");
+		connection.setRequestProperty("Content-Type",
+				"application/vnd.com.nsn.cumulocity.alarm+json; charset=UTF-8;ver=0.9");
+		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.alarm+json; charset=UTF-8; ver=0.9");
+
+		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
+		connection.setDoOutput(true);
+		
+//		POST /alarm/alarms HTTP/1.1
+//		Content-Type: application/vnd.com.nsn.cumulocity.alarm+json
+//		Accept: application/vnd.com.nsn.cumulocity.alarm+json
+//		...
+//		{
+//		"source": { "id": "10400" },
+//		"text": "Tracker lost power",
+//		"time": "2013-08-19T21:31:22.740+02:00",
+//		"type": "c8y_PowerAlarm",
+//		"status": "ACTIVE",
+//		"severity": "MAJOR",
+//		}
+
+		JSONObject requestObj = new JSONObject();
+		JSONObject mainObj = new JSONObject();	
+		
+		mainObj.put("id", tenantId);
+		requestObj.put("source", mainObj);
+		
+		requestObj.put("text", alarmText);
+		requestObj.put("time", timestamp);		
+		requestObj.put("type", alarmType);
+		requestObj.put("status", alarmStatus);
+		requestObj.put("severity", alarmSeverity);
+		
+		System.out.println(requestObj.toJSONString());
+
+		OutputStream out = connection.getOutputStream();
+		
+		out.write(requestObj.toJSONString().getBytes("UTF-8"));
+		out.close();
+		
+		BufferedReader inputStream;
+		
+//		HTTP/1.1 201 Created
+//		Content-Type: application/vnd.com.nsn.cumulocity.alarm+json
+//		...
+//		{
+//		"id": "214600",
+//		"self": "https://.../alarm/alarms/214600",
+//		...
+//		}
+		
+		
+		if (connection.getResponseCode() == connection.HTTP_CREATED){
+			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
+			
+			  JSONParser parser = new JSONParser();
+			  JSONObject jObj = null;
+			  
+				try {
+					
+					StringBuilder sb = new StringBuilder();
+	                String line = null;
+	                while ((line = inputStream.readLine()) != null) {
+	                    sb.append(line + "\n");
+	                }
+	                inputStream.close();
+	                String json = sb.toString();
+	                
+	                jObj = (JSONObject)parser.parse(json);
+
+				}catch (Exception e){
+					e.printStackTrace();
+				}
+				
+				serverAlarmID = (String) jObj.get("id");
+			
+			System.out.println("ALARM_CREATED, ID: " + serverAlarmID);
+		}else{
+			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
+			System.out.println("DENY");
+		}
+		 
+		return serverAlarmID;
+		
+		
+		
+	}
+
 	
 	
 	

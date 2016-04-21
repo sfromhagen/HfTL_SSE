@@ -53,6 +53,15 @@ public class igsam {
 		String strTime = getDateTimeStamp();
 		connectCdd.sendData(id,(float) 13.37,strTime);
 			
+//		"source": { "id": "10400" },
+//		"text": "Tracker lost power",
+//		"time": "2013-08-19T21:31:22.740+02:00",
+//		"type": "c8y_PowerAlarm",
+//		"status": "ACTIVE",
+//		"severity": "MAJOR",
+		
+		connectCdd.sendAlarms(id,"Tracker lost power",strTime,"c8y_PowerAlarm","ACTIVE","MAJOR");
+		
 		
 		System.out.println(id);
 	}
