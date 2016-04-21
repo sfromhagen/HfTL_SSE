@@ -22,15 +22,16 @@ public class cloudConnection {
 	private String url ="";
 	private String user;
 	private String password;
+	private String encodedAuth;
 	
 	public cloudConnection (String url) throws Exception{
 		this.url = url;
 	}
 	
 	
-	public void login (String user, String password){
-		this.user = user;
-		this.password = password;		
+	public void setAuthorization (String encoded){
+		this.encodedAuth = encoded;
+	
 	}
 	
 	public String getDevice (String serial) throws Exception{
@@ -45,7 +46,7 @@ public class cloudConnection {
         //String encoded = Base64.
         //connection.setRequestProperty("Authorization", "Basic "+encoded);
 		
-		connection.setRequestProperty("Authorization", "Basic SGZUTC1Hcm91cC0yOkdlaEhlaW0xMzEw");
+		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.externalId+json,application/vnd.com.nsn.cumulocity.error+json; charset=UTF-8;ver=0.9");
 
 		connection.connect();
@@ -103,7 +104,7 @@ public class cloudConnection {
         //String encoded = Base64.
         //connection.setRequestProperty("Authorization", "Basic "+encoded);
 		
-		connection.setRequestProperty("Authorization", "Basic SGZUTC1Hcm91cC0yOkdlaEhlaW0xMzEw");
+		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setDoOutput(true);
 		
 		
@@ -155,7 +156,7 @@ public class cloudConnection {
 				"application/vnd.com.nsn.cumulocity.externalId+json; charset=UTF-8; ver=0.9");
 		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.externalId+json; charset=UTF-8; ver=0.9");
 
-		connection.setRequestProperty("Authorization", "Basic SGZUTC1Hcm91cC0yOkdlaEhlaW0xMzEw");
+		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setDoOutput(true);
 		
 
@@ -205,7 +206,7 @@ public class cloudConnection {
 				"application/vnd.com.nsn.cumulocity.measurement+json; charset=UTF-8;ver=0.9");
 		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.measurement+json; charset=UTF-8; ver=0.9");
 
-		connection.setRequestProperty("Authorization", "Basic SGZUTC1Hcm91cC0yOkdlaEhlaW0xMzEw");
+		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setDoOutput(true);
 		
 		

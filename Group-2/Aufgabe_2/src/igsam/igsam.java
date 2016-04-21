@@ -1,9 +1,12 @@
 package igsam;
 
+import java.io.Console;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+
+import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 public class igsam {
 
@@ -16,8 +19,28 @@ public class igsam {
 	
 		String serial = "4242";
 		url = "https://cdm.ram.m2m.telekom.com/";
-
+		String encodedAuth = null; 
+		
+		Console console = System.console();
+		if (console != null) {
+			// Eclipse is being retarded again with bugs from 2008
+			// this prompt will only show when running the jar as eclipse doesn't attach a proper console
+			System.out.print("Enter your username: ");
+			String username = console.readLine();
+			 
+			System.out.print("Enter your password: ");
+			char[] password = console.readPassword();
+			
+			String authorization = username +":"+ new String(password);
+			encodedAuth = Base64.encode(authorization.getBytes());
+	        System.out.println(encodedAuth);
+		}else{
+			// fallback for running in debug mode inside the IDE 
+			encodedAuth = "SGZUTC1Hcm91cC0yOkdlaEhlaW0xMzEw";
+		}
+			
 		cloudConnection connectCdd = new cloudConnection(url);
+		connectCdd.setAuthorization(encodedAuth);
 	
 		// 1337 -> Sensor-Serial | id -> assigned ID by CdD
 		String id = connectCdd.getDevice(serial);
