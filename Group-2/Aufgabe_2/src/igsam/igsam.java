@@ -1,6 +1,9 @@
 package igsam;
 
 import java.io.Console;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.TimeZone;
@@ -13,7 +16,8 @@ public class igsam {
 	//todo read debug level via ini file
 	public static int debugLevel = 0;
 	public static String url = null;
-	
+    protected static InetAddress Interface;
+    protected static int Port = 4242;
 	
 	public static void main(String[] args) throws Exception{
 	
@@ -39,6 +43,57 @@ public class igsam {
 			encodedAuth = "SGZUTC1Hcm91cC0yOkdlaEhlaW0xMzEw";
 		}
 			
+		
+		//START SERVER!!!!!!!!!!!!!
+		
+    		ServerSocket serversocket;
+    		
+    		try {
+    			
+    			Interface = InetAddress.getLocalHost();
+    			
+                System.out.println("Versuche " +Interface+ " an Port " +Port+ " zu binden.");
+                
+                serversocket = new ServerSocket(Port, 0, Interface);
+               
+            }
+            catch (Exception e) { 
+                System.out.println("I/O Error while binding to socket: "+e.getMessage());
+                return;
+            }
+            
+            System.out.println("\nBereit. Warten auf Anfragen...\n");
+            
+            // Dispatch loop
+            while (true){
+                // i changed something
+                try {
+                    // Waiting for incoming client requests
+                    Socket connectionSocket = serversocket.accept();
+
+                    System.out.println("neue verbingung");
+                    
+                   // hold all metadata of the connection
+                    cloudConnection connectionObject = new cloudConnection(url);
+                    connectionObject.setAuthorization(encodedAuth);
+                    System.out.println("123456");
+                    // 
+                    listener runnable = new listener(connectionObject, connectionSocket);
+                    System.out.println("neuer Thread");
+                    new Thread(runnable).start();
+                }
+                catch (Exception e) { 
+                    System.out.println("Fehler im Serverthread: " + e.getMessage());
+                }
+            }
+            // ENDE SERVER
+		
+		
+	}
+	
+	
+	public static void testCdd(String encodedAuth, String serial, String url) throws Exception{
+		
 		cloudConnection connectCdd = new cloudConnection(url);
 		connectCdd.setAuthorization(encodedAuth);
 	
@@ -71,7 +126,9 @@ public class igsam {
 		connectCdd.updateAlarmStatus(AlarmID,"CLEARED");
 		
 		System.out.println(id);
+		
 	}
+	
 	public static String getDateTimeStamp(){
 		// get Timestamp 2014-12-15T13:00:00.123
 		LocalDateTime timestamp = LocalDateTime.now();
