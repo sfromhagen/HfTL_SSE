@@ -75,12 +75,10 @@ public class listener implements Runnable {
 					cloudCon.sendAlarms(id,data[3],data[0],"c8y_PowerAlarm","ACTIVE","MAJOR");
 				} 
         	}
-	
 		} catch (Exception e) {
 			igsam.writeDebug("[ListenerRun] Exception while processing data, lets close this thread.", 0);
 			done = true;
 		}
-
 	}
 
 	public static String fixDateTimeStamp(String orgTimeStamp) throws ParseException{
@@ -91,10 +89,10 @@ public class listener implements Runnable {
 		orgDate = DateFormat.getDateInstance().parse(orgTimeStamp);
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-		  sdf.setTimeZone(TimeZone.getTimeZone("Etc/UTC"));
-		  String fixTimeStamp = sdf.format(orgDate);
+		sdf.setTimeZone(TimeZone.getTimeZone("Etc/UTC"));
+		String fixTimeStamp = sdf.format(orgDate);
 		
-		  System.out.println(fixTimeStamp);
+		System.out.println(fixTimeStamp);
 		  
 		LocalDateTime timestamp = LocalDateTime.now();
 		

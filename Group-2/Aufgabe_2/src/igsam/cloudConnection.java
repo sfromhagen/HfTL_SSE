@@ -25,8 +25,8 @@ public class cloudConnection {
 	public void setAuthorization (String encoded) throws Exception{
 		this.encodedAuth = encoded;
 		
+		// GET Request against an arbirary ID to verify the credentials
 		this.verifyCredentials("1234");
-
 	}
 	
 	public String getDevice (String serial) throws Exception{
@@ -86,7 +86,6 @@ public class cloudConnection {
 			}
 	}
 			
-	
 	public String addDevice (String tenantId) throws Exception{
 	
 		URL targetUrl  = new URL(igsam.url+"inventory/managedObjects");
@@ -142,7 +141,6 @@ public class cloudConnection {
 				return null;
 			}
 	}
-
 
 	public void registerDevice (String tenantId, String id) throws Exception{
 
@@ -261,7 +259,6 @@ public class cloudConnection {
 		}
 	}
 	
-
 	public String sendAlarms (String tenantId, String alarmText, String timestamp, String alarmType, String alarmStatus, String alarmSeverity ) throws Exception{	
 		
 		String serverAlarmID = "";
@@ -391,7 +388,6 @@ public class cloudConnection {
 			throw new Exception();
 		}
 	}
-
 	
 	public void sendEvent (String tenantId, float altValue,float lngValue,float latValue, String timestamp, String msg, String type) throws Exception{
 
@@ -452,7 +448,7 @@ public class cloudConnection {
 		}	 
 	}	
 	
-public void verifyCredentials (String serial) throws Exception{
+	public void verifyCredentials (String serial) throws Exception{
 		
 		URL targetUrl  = new URL(igsam.url+"/identity/externalIds/c8y_Serial/"+serial);
 		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
