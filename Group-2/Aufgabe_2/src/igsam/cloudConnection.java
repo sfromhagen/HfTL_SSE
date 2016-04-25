@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -15,8 +16,10 @@ import javax.net.ssl.HttpsURLConnection;
 public class cloudConnection {
 
 	private String encodedAuth;
+	private String namePrefix;
 	
-	public cloudConnection (String url) throws Exception{
+	public cloudConnection (String prefix) throws Exception{
+		this.namePrefix = prefix;
 	}
 	
 	
@@ -39,7 +42,7 @@ public class cloudConnection {
 		connection.connect();
 		
 		BufferedReader inputStream = null;
-		if (connection.getResponseCode() == connection.HTTP_OK){
+		if (connection.getResponseCode() == HttpURLConnection.HTTP_OK){
 			//read response from server
 			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
 		}else{
@@ -69,7 +72,7 @@ public class cloudConnection {
 				e.printStackTrace();
 			}
 			
-			if (connection.getResponseCode() == connection.HTTP_OK){
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK){
 				return (String) ((JSONObject)jObj.get("managedObject")).get("id");
 			} else {
 				return null;
@@ -102,9 +105,9 @@ public class cloudConnection {
 
 		JSONObject obj = new JSONObject();
 		
-		JSONArray list = new JSONArray();
+		JSONObject list = new JSONObject();
 		obj.put("c8y_IsDevice", list);
-		obj.put("name", "TestDeviceGr2_JSON");
+		obj.put("name", namePrefix+"_"+tenantId);
 		
 		OutputStream out = connection.getOutputStream();
 		//out.write(body.getBytes("UTF-8"));
@@ -245,7 +248,7 @@ public class cloudConnection {
 		
 		BufferedReader inputStream;
 		
-		if (connection.getResponseCode() == connection.HTTP_CREATED){
+		if (connection.getResponseCode() == HttpURLConnection.HTTP_CREATED){
 			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
 			System.out.println("ACCEPTED");
 		}else{
@@ -315,7 +318,7 @@ public class cloudConnection {
 //		}
 		
 		
-		if (connection.getResponseCode() == connection.HTTP_CREATED){
+		if (connection.getResponseCode() == HttpURLConnection.HTTP_CREATED){
 			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
 			
 			  JSONParser parser = new JSONParser();
@@ -389,7 +392,7 @@ public class cloudConnection {
 		BufferedReader inputStream;
 			
 		
-		if (connection.getResponseCode() == connection.HTTP_OK){
+		if (connection.getResponseCode() == HttpURLConnection.HTTP_OK){
 			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
 	
 			System.out.println("ALARM_CLEARED, ID: " + serverAlarmID);
@@ -456,7 +459,7 @@ public class cloudConnection {
 		
 		BufferedReader inputStream;
 		
-		if (connection.getResponseCode() == connection.HTTP_CREATED){
+		if (connection.getResponseCode() == HttpURLConnection.HTTP_CREATED){
 			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
 			System.out.println("ACCEPTED");
 		}else{

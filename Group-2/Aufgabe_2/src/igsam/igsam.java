@@ -1,11 +1,14 @@
 package igsam;
 
 import java.io.Console;
+import java.io.FileInputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Hashtable;
+import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -15,15 +18,24 @@ public class igsam {
 
 	//todo read debug level via ini file
 	public static int debugLevel = 0;
-	public static String url = null;
+	public static String url;
     protected static InetAddress Interface;
-    protected static int Port = 4242;
-	
+    protected static int Port;
+    protected static Hashtable<String, String> types = new Hashtable<String, String>();
+    
 	public static void main(String[] args) throws Exception{
 	
-		String serial = "4242";
-		url = "https://cdm.ram.m2m.telekom.com/";
 		String encodedAuth = null; 
+		Properties conf = new Properties();
+		
+		try {
+            // loading Configuration
+            FileInputStream config = new FileInputStream("config.properties");
+            conf.load(config);
+            config.close();
+        }catch (Exception e) { 
+            System.out.println("Konfiguration konnte nicht geladen werden.\nVerwendet Standardwerte");
+        }
 		
 		Console console = System.console();
 		if (console != null) {
@@ -42,7 +54,17 @@ public class igsam {
 			// fallback for running in debug mode inside the IDE 
 			encodedAuth = "SGZUTC1Hcm91cC0yOkdlaEhlaW0xMzEw";
 		}
-			
+		Port = (conf.getProperty("Port")==null) ? 
+	            new Integer(4242) : Integer.parseInt(conf.getProperty("Port"));	
+	            
+	    String strInterface = (conf.getProperty("Interface")==null) ? 
+	    		"0.0.0.0" : conf.getProperty("Interface");
+	    
+	    url = (conf.getProperty("url")==null) ? 
+	    		"https://cdm.ram.m2m.telekom.com/" : conf.getProperty("url");
+	    
+	    
+	    Interface = InetAddress.getByName(strInterface);
 		
 		//START SERVER!!!!!!!!!!!!!
 		
@@ -70,16 +92,12 @@ public class igsam {
                 try {
                     // Waiting for incoming client requests
                     Socket connectionSocket = serversocket.accept();
-
-                    System.out.println("neue verbingung");
                     
-                   // hold all metadata of the connection
-                    cloudConnection connectionObject = new cloudConnection(url);
+                    cloudConnection connectionObject = new cloudConnection("HfTL-Group2");
                     connectionObject.setAuthorization(encodedAuth);
-                    System.out.println("123456");
-                    // 
+
                     listener runnable = new listener(connectionObject, connectionSocket);
-                    System.out.println("neuer Thread");
+
                     new Thread(runnable).start();
                 }
                 catch (Exception e) { 

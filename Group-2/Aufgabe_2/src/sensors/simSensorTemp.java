@@ -49,18 +49,31 @@ public class simSensorTemp {
 
 		while (true){
 			
-			float minX = 00.0f;
-			float maxX = 35.0f;
-
-			Random rand = new Random();
-
-			float finalX = rand.nextFloat() * (maxX - minX) + minX;
 			
+			Random random = new Random();
 			
-			String line = getDateTimeStamp()+","+serial+",measuredTemp,"+Float.toString(finalX); 
-			System.out.println(line);
-			output.println(line);
-			Thread.sleep(5000);
+			if (random.nextFloat()<0.9){
+			
+				float minX = 20.0f;
+				float maxX = 25.0f;
+	
+				float finalX = random.nextFloat() * (maxX - minX) + minX;
+				
+				String line = getDateTimeStamp()+";"+serial+";measuredTemp;"+Float.toString(finalX); 
+				System.out.println(line);
+				output.println(line);
+			} else{
+				// Triggered an alarm
+				String line = getDateTimeStamp()+";"+serial+";newAlarm;"+"Sensor battery low"; 
+				System.out.println(line);
+				output.println(line);
+
+				//line = getDateTimeStamp()+";"+serial+";newAlarm;"+"Sensor battery low"; 
+				//System.out.println(line);
+				
+			}
+			Thread.sleep(30000);
+				
 		}
 			
 	}//end main
