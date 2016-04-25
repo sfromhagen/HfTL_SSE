@@ -70,6 +70,7 @@ public class simSensorTemp {
             System.out.println("Configuration");
             System.out.println("Interface: "+serverInterface);
             System.out.println("Port: "+port);
+            System.out.println("Serial: "+serial);
             System.out.println("Debug Level: "+debugLevel);
         }
 		
@@ -109,11 +110,7 @@ public class simSensorTemp {
 				// Triggered an alarm
 				String line = getDateTimeStamp()+";"+serial+";newAlarm;"+"Sensor battery low"; 
 				System.out.println(line);
-				output.println(line);
-
-				//line = getDateTimeStamp()+";"+serial+";newAlarm;"+"Sensor battery low"; 
-				//System.out.println(line);
-				
+				output.println(line);		
 			}
 			Thread.sleep(30000);
 				

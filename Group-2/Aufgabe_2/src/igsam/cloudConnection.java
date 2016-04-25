@@ -22,8 +22,11 @@ public class cloudConnection {
 		this.namePrefix = prefix;
 	}
 	
-	public void setAuthorization (String encoded){
+	public void setAuthorization (String encoded) throws Exception{
 		this.encodedAuth = encoded;
+		
+		this.verifyCredentials("1234");
+
 	}
 	
 	public String getDevice (String serial) throws Exception{
@@ -75,6 +78,9 @@ public class cloudConnection {
 			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK){
 				igsam.writeDebug("[getDevice] Receive JSON response: " + jObj.toJSONString(), 2);
 				return (String) ((JSONObject)jObj.get("managedObject")).get("id");
+			} else if (connection.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN || 
+					connection.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+				throw new Exception("Invalid Credentials");
 			} else {
 				return null;
 			}
@@ -445,4 +451,24 @@ public class cloudConnection {
 			throw new Exception();
 		}	 
 	}	
+	
+public void verifyCredentials (String serial) throws Exception{
+		
+		URL targetUrl  = new URL(igsam.url+"/identity/externalIds/c8y_Serial/"+serial);
+		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
+		
+		//built request params
+		connection.setRequestMethod("GET");
+		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
+		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.externalId+json,application/vnd.com.nsn.cumulocity.error+json; charset=UTF-8;ver=0.9");
+
+		//send request to server
+		connection.connect();
+				
+		if (connection.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN || 
+					connection.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+			throw new Exception("Invalid Credentials");
+		}
+	}
+	
 }

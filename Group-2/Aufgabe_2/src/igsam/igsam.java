@@ -72,6 +72,19 @@ public class igsam {
 			// fallback for running in debug mode inside the IDE 
 			encodedAuth = "SGZUTC1Hcm91cC0yOkdlaEhlaW0xMzEw";
 		}
+		
+		// Verify that the provided credentials are OK. Stop execution if not
+		cloudConnection testCredentials = new cloudConnection(url);
+		
+		try {
+			testCredentials.setAuthorization(encodedAuth);
+		}catch (Exception e) {
+			String message = e.getMessage();
+			if (message.equalsIgnoreCase("Invalid Credentials")){
+				System.out.println("Credentials are invalid!");
+			}
+			return;
+		}
 	    
 		if(igsam.debugLevel>=1){
 			System.out.println("Interface: " + Interface.toString());

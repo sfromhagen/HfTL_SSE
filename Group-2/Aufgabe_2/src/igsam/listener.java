@@ -60,13 +60,13 @@ public class listener implements Runnable {
 				}
 				
 				String id = cloudCon.getDevice(data[1]);
-				
-				igsam.writeDebug("[ListenerRun] Device existed, ID : "+ id, 2);
-				
+
 				if (id == null){
 					id = cloudCon.addDevice(data[1]);
 					igsam.writeDebug("[ListenerRun] Added device with ID: "+ id, 2);
 					cloudCon.registerDevice(data[1], id);
+				} else {
+					igsam.writeDebug("[ListenerRun] Device existed, ID : "+ id, 2);
 				}
 				
 				if (data[2].equalsIgnoreCase("measuredTemp")){
