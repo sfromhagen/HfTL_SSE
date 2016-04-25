@@ -7,7 +7,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.Hashtable;
 import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -16,12 +15,11 @@ import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 public class igsam {
 
-	//todo read debug level via ini file
-	public static int debugLevel = 0;
+	public static int debugLevel;
 	public static String url;
     protected static InetAddress Interface;
     protected static int Port;
-    protected static Hashtable<String, String> types = new Hashtable<String, String>();
+    protected static String namePrefix;
     
 	public static void main(String[] args) throws Exception{
 	
@@ -34,10 +32,27 @@ public class igsam {
             conf.load(config);
             config.close();
         }catch (Exception e) { 
-            System.out.println("Konfiguration konnte nicht geladen werden.\nVerwendet Standardwerte");
+            System.out.println("Couldn't load configuration file.\nUsing default values.");
         }
-		
-		Console console = System.console();
+	            
+	    String strInterface = (conf.getProperty("Interface")==null) ? 
+	    		"0.0.0.0" : conf.getProperty("Interface");
+	    
+	    Interface = InetAddress.getByName(strInterface);
+	    
+		Port = (conf.getProperty("Port")==null) ? 
+	            new Integer(4242) : Integer.parseInt(conf.getProperty("Port"));	
+	    
+	    debugLevel = (conf.getProperty("debugLevel")==null) ? 
+	            new Integer(2) : Integer.parseInt(conf.getProperty("debugLevel"));	
+	            
+	    url = (conf.getProperty("url")==null) ? 
+	    		"https://cdm.ram.m2m.telekom.com/" : conf.getProperty("url");
+	    	
+	    namePrefix = (conf.getProperty("namePrefix")==null) ? 
+	    		"HfTL-Group2" : conf.getProperty("namePrefix");
+	    
+	    Console console = System.console();
 		if (console != null) {
 			// Eclipse is being retarded again with bugs from 2008
 			// this prompt will only show when running the jar as eclipse doesn't attach a proper console
@@ -49,51 +64,44 @@ public class igsam {
 			
 			String authorization = username +":"+ new String(password);
 			encodedAuth = Base64.encode(authorization.getBytes());
-	        System.out.println(encodedAuth);
+	        
+			if(igsam.debugLevel>=3){
+				System.out.println("encodedAuth: " + encodedAuth);
+			}
 		}else{
 			// fallback for running in debug mode inside the IDE 
 			encodedAuth = "SGZUTC1Hcm91cC0yOkdlaEhlaW0xMzEw";
 		}
-		Port = (conf.getProperty("Port")==null) ? 
-	            new Integer(4242) : Integer.parseInt(conf.getProperty("Port"));	
-	            
-	    String strInterface = (conf.getProperty("Interface")==null) ? 
-	    		"0.0.0.0" : conf.getProperty("Interface");
 	    
-	    url = (conf.getProperty("url")==null) ? 
-	    		"https://cdm.ram.m2m.telekom.com/" : conf.getProperty("url");
-	    
-	    
-	    Interface = InetAddress.getByName(strInterface);
+		if(igsam.debugLevel>=1){
+			System.out.println("Interface: " + Interface.toString());
+			System.out.println("Port: " + Port);
+			System.out.println("debugLevel: " + debugLevel);
+			System.out.println("Url: " + url); 
+			System.out.println("namePrefix: " + namePrefix);
+		}
 		
-		//START SERVER!!!!!!!!!!!!!
+		//configuration read. Starting server.
 		
     		ServerSocket serversocket;
     		
     		try {
-    			
-    			Interface = InetAddress.getLocalHost();
-    			
-                System.out.println("Versuche " +Interface+ " an Port " +Port+ " zu binden.");
-                
-                serversocket = new ServerSocket(Port, 0, Interface);
-               
+    			writeDebug("Trying to bind" +Interface+ " on " +Port+ ".", 2);
+    			serversocket = new ServerSocket(Port, 0, Interface);
             }
             catch (Exception e) { 
                 System.out.println("I/O Error while binding to socket: "+e.getMessage());
                 return;
             }
-            
-            System.out.println("\nBereit. Warten auf Anfragen...\n");
+    		writeDebug("\nReady. Wait for request...\n", 2);
             
             // Dispatch loop
             while (true){
-                // i changed something
                 try {
                     // Waiting for incoming client requests
                     Socket connectionSocket = serversocket.accept();
                     
-                    cloudConnection connectionObject = new cloudConnection("HfTL-Group2");
+                    cloudConnection connectionObject = new cloudConnection(namePrefix);
                     connectionObject.setAuthorization(encodedAuth);
 
                     listener runnable = new listener(connectionObject, connectionSocket);
@@ -101,12 +109,9 @@ public class igsam {
                     new Thread(runnable).start();
                 }
                 catch (Exception e) { 
-                    System.out.println("Fehler im Serverthread: " + e.getMessage());
+                    System.out.println("Server thread error : " + e.getMessage());
                 }
-            }
-            // ENDE SERVER
-		
-		
+            }		
 	}
 	
 	
@@ -137,8 +142,6 @@ public class igsam {
 		String AlarmID;
 		AlarmID = connectCdd.sendAlarms(id,"Tracker lost power",strTime,"c8y_PowerAlarm","ACTIVE","MAJOR");
 		
-		//ToDO: GetAlarms -> Macht keine Sinn?! Last occurence ist doch auch wichtig?
-		
 		Thread.sleep(20000);
 			
 		connectCdd.updateAlarmStatus(AlarmID,"CLEARED");
@@ -163,5 +166,12 @@ public class igsam {
 		// get timestamp 2014-12-15T13:00:00.123+02:00
 		return timestamp.toString()+timeZoneString;
 		
+	}
+	
+	public static void writeDebug (String msg, int level){
+		if(level<=igsam.debugLevel){
+			//if used level small eq. configured level
+			System.out.println(msg);			
+		}
 	}
 }

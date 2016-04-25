@@ -1,7 +1,6 @@
 package igsam;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.text.DateFormat;
@@ -31,26 +30,25 @@ public class listener implements Runnable {
                 getInputStream()));           
         }
         catch(Exception e){
-            System.out.println("Fehler beim generieren der Streams");
+            System.out.println("Error while creating streams.");
         }
 	}
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		System.out.println("ready to listen");
+		
+		igsam.writeDebug("[ListenerRun] Ready to listen", 2);
+
         try {
-			//System.out.println(input.readLine());
 			
         	while (!done){
 				String inputData = input.readLine();
 				String[] data;
 				
-				String timestamp;
-						
+				igsam.writeDebug("[ListenerRun] Received message: "+ inputData, 3);
+				
 				//Split the data  
 				data = inputData.split(";");
-				
 				
 				if (data.length != 4){
 					//we didnt get 4 elements, lets skip this one
@@ -63,10 +61,11 @@ public class listener implements Runnable {
 				
 				String id = cloudCon.getDevice(data[1]);
 				
-				System.out.println(id);
+				igsam.writeDebug("[ListenerRun] Device existed, ID : "+ id, 2);
+				
 				if (id == null){
 					id = cloudCon.addDevice(data[1]);
-					System.out.println(id);
+					igsam.writeDebug("[ListenerRun] Added device with ID: "+ id, 2);
 					cloudCon.registerDevice(data[1], id);
 				}
 				
@@ -75,12 +74,10 @@ public class listener implements Runnable {
 				} else if(data[2].equalsIgnoreCase("newAlarm")){
 					cloudCon.sendAlarms(id,data[3],data[0],"c8y_PowerAlarm","ACTIVE","MAJOR");
 				} 
-				
-				
         	}
 	
 		} catch (Exception e) {
-			// Exception while processing data, lets close this thread
+			igsam.writeDebug("[ListenerRun] Exception while processing data, lets close this thread.", 0);
 			done = true;
 		}
 

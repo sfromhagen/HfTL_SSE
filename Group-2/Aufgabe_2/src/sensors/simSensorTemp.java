@@ -1,6 +1,5 @@
 package sensors;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.InetAddress;
@@ -11,24 +10,68 @@ import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
+import joptsimple.util.InetAddressConverter;
+
 public class simSensorTemp {
 	
     protected static InetAddress serverInterface;
     protected static int port;
     protected static String serial;
+    protected static int debugLevel;
 	
 	public static void main(String[] args) throws Exception{
-		
-	/*Parameter auslesen für Modus: Push(=Intervall)/Pull(=get)- Mode*/
 	
-	/*Simulierte Rückgabe von zeitstempel + Temperatur in Grad C*/
-
-		
-		serverInterface = InetAddress.getLocalHost(); 
-		port = 4242;
-		serial = "12345678";
 		Socket connectionSocket;
-		
+	        
+		OptionParser parser = new OptionParser();
+        
+        OptionSpec<Integer> oPort =
+                parser.accepts( "p" ).withOptionalArg().ofType( Integer.class )
+                .describedAs( "port" ).defaultsTo( 4242 );
+        OptionSpec<InetAddress> oInterface =
+                parser.accepts( "i" ).withOptionalArg().withValuesConvertedBy( new InetAddressConverter() );
+        OptionSpec<String> oSerial =
+                parser.accepts( "s" ).withOptionalArg().ofType( String.class )
+                .describedAs( "serial" ).defaultsTo( "1234567890" );
+        OptionSpec<Integer> oDebugLevel =
+                parser.accepts( "d" ).withOptionalArg().ofType( Integer.class )
+                .describedAs( "debug level" ).defaultsTo( 2 );
+        OptionSpec oHelp = parser.accepts( "h" ).forHelp();
+        OptionSet options = parser.parse( args );
+ 
+        // Options are now parsed from command line. Some translation needed.        
+        if (options.has( oHelp )) {
+        	// User asked for help. 
+        	//Dump parameter text and stop execution (as he needs to fix the arguments)
+        	parser.printHelpOn( System.out );
+        	return;
+        }
+          
+    	port = oPort.value(options);
+    	serial = oSerial.value(options);
+    	
+    	// jopt does not support default values for InetAddress for some reason. Workaround:
+    	if (options.has( oInterface )) {
+    		serverInterface = oInterface.value(options);
+    	} else {
+    		serverInterface = InetAddress.getLocalHost();    		
+    	}
+    	
+    	if (options.has( oDebugLevel )) {
+    		debugLevel = oDebugLevel.value(options);
+    	} else {
+    		debugLevel=0;
+    	}
+
+    	if(debugLevel >=1){
+            System.out.println("Configuration");
+            System.out.println("Interface: "+serverInterface);
+            System.out.println("Port: "+port);
+            System.out.println("Debug Level: "+debugLevel);
+        }
 		
 		try {
             System.out.println("Connecting to " +serverInterface+ ":" +port);

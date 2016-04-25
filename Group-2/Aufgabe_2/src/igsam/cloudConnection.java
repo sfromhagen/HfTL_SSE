@@ -22,10 +22,8 @@ public class cloudConnection {
 		this.namePrefix = prefix;
 	}
 	
-	
 	public void setAuthorization (String encoded){
 		this.encodedAuth = encoded;
-	
 	}
 	
 	public String getDevice (String serial) throws Exception{
@@ -45,9 +43,11 @@ public class cloudConnection {
 		if (connection.getResponseCode() == HttpURLConnection.HTTP_OK){
 			//read response from server
 			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
+			igsam.writeDebug("[getDevice] Got 200 OK response.", 2);
 		}else{
 			//catch errors
 			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
+			igsam.writeDebug("[getDevice] Got error response.", 2);
 		}
 		
 		
@@ -73,6 +73,7 @@ public class cloudConnection {
 			}
 			
 			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK){
+				igsam.writeDebug("[getDevice] Receive JSON response: " + jObj.toJSONString(), 2);
 				return (String) ((JSONObject)jObj.get("managedObject")).get("id");
 			} else {
 				return null;
@@ -88,32 +89,20 @@ public class cloudConnection {
 		connection.setRequestMethod("POST");
 		connection.setRequestProperty("Content-Type",
 				"application/vnd.com.nsn.cumulocity.managedObject+json; charset=UTF-8; ver=0.9");
-		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.managedObject+json; charset=UTF-8; ver=0.9");
-		
-		//todo: Abfrage ob schon eingeloggt.
-		
-		//todo: Base64 encoding 
-		//String encodedPassword = user + ":" + password;
-        //String encoded = Base64.
-        //connection.setRequestProperty("Authorization", "Basic "+encoded);
-		
+		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.managedObject+json; charset=UTF-8; ver=0.9");		
 		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setDoOutput(true);
-		
-		
-		//String body = "{\r\n \"c8y_IsDevice\" : {},\r\n\"name\" : \"TestDeviceGr2\"\r\n}";
-
+	
 		JSONObject obj = new JSONObject();
-		
 		JSONObject list = new JSONObject();
 		obj.put("c8y_IsDevice", list);
 		obj.put("name", namePrefix+"_"+tenantId);
 		
 		OutputStream out = connection.getOutputStream();
-		//out.write(body.getBytes("UTF-8"));
 		out.write(obj.toJSONString().getBytes("UTF-8"));
 		out.close();
 		
+		igsam.writeDebug("[addDevice] Sending POST with JSON body: " + obj.toJSONString(), 2);
 		BufferedReader inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
 		
 		  JSONParser parser = new JSONParser();
@@ -135,11 +124,21 @@ public class cloudConnection {
 				e.printStackTrace();
 			}
 			
-			return (String) jObj.get("id");
+			//check response from server.
+			
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_CREATED){
+				//read response from server
+				igsam.writeDebug("[addDevice] Got 201 CREATED response.",2);
+				igsam.writeDebug("[addDevice] Receive JSON response: " + obj.toJSONString(), 2);
+				return (String) jObj.get("id");
+			}else{
+				igsam.writeDebug("[addDevice] Got error response.",2);
+				return null;
+			}
 	}
-	
 
-	public String registerDevice (String tenantId, String id) throws Exception{
+
+	public void registerDevice (String tenantId, String id) throws Exception{
 
 		URL targetUrl = new URL(igsam.url+"identity/globalIds/"+id+"/externalIds");
 		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
@@ -160,7 +159,6 @@ public class cloudConnection {
 		obj.put("externalId", tenantId);
 		
 		OutputStream out = connection.getOutputStream();
-		//out.write(body.getBytes("UTF-8"));
 		out.write(obj.toJSONString().getBytes("UTF-8"));
 		out.close();
 		
@@ -185,10 +183,16 @@ public class cloudConnection {
 				e.printStackTrace();
 			}
 			
-			return (String) jObj.get("id");
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_CREATED){
+				//read response from server
+				igsam.writeDebug("[registerDevice] Got 201 CREATED response.",2);
+				igsam.writeDebug("[registerDevice] Receive JSON response: " + jObj.toJSONString(), 2);
+			}else{
+				igsam.writeDebug("[registerDevice] Got error response.",2);
+				throw new Exception();
+			}	
 	}
-	
-	
+
 	public void sendData (String tenantId, float value, String timestamp ) throws Exception{
 
 		URL targetUrl = new URL(igsam.url+"measurement/measurements");
@@ -198,24 +202,23 @@ public class cloudConnection {
 		connection.setRequestProperty("Content-Type",
 				"application/vnd.com.nsn.cumulocity.measurement+json; charset=UTF-8;ver=0.9");
 		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.measurement+json; charset=UTF-8; ver=0.9");
-
 		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setDoOutput(true);
-		
-//	{
-//		"c8y_TemperatureMeasurement":{
-//			"T": {
-//				"value": 21.23,
-//				"unit":"C"
-//				}
-//		},
-//		"time": "2014-12-15T13:00:00.123+02:00",
-//		"source": {
-//			"id": "1231234"
-//			},
-//		"type":"c8y_PTCMeasurement"
-//	}
-		//ToDo Celsius in config file?!?!
+
+		// Example JSON-Object to build:
+		//	{
+		//		"c8y_TemperatureMeasurement":{
+		//			"T": {
+		//				"value": 21.23,
+		//				"unit":"C"
+		//				}
+		//		},
+		//		"time": "2014-12-15T13:00:00.123+02:00",
+		//		"source": {
+		//			"id": "1231234"
+		//			},
+		//		"type":"c8y_PTCMeasurement"
+		//	}
 
 		JSONObject requestObj = new JSONObject();
 		JSONObject mainObj = new JSONObject();
@@ -233,29 +236,23 @@ public class cloudConnection {
 		
 		JSONObject sourceObj = new JSONObject();
 		
-		sourceObj.put("id", tenantId);
-		
+		sourceObj.put("id", tenantId);	
 		requestObj.put("source", sourceObj);
-		
 		requestObj.put("type", "c8y_PTCMeasurement");
 		
-		System.out.println(requestObj.toJSONString());
-
-		OutputStream out = connection.getOutputStream();
+		igsam.writeDebug("[sendData] JSON request object: "+ requestObj.toJSONString(),2);
 		
+		OutputStream out = connection.getOutputStream();
 		out.write(requestObj.toJSONString().getBytes("UTF-8"));
 		out.close();
 		
-		BufferedReader inputStream;
-		
 		if (connection.getResponseCode() == HttpURLConnection.HTTP_CREATED){
-			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
-			System.out.println("ACCEPTED");
+			//read response from server
+			igsam.writeDebug("[sendData]  Got 201 CREATED response.",2);
 		}else{
-			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
-			System.out.println("DENY");
+			igsam.writeDebug("[sendData]  Got error response.",2);
+			throw new Exception();
 		}
-		 
 	}
 	
 
@@ -270,22 +267,18 @@ public class cloudConnection {
 		connection.setRequestProperty("Content-Type",
 				"application/vnd.com.nsn.cumulocity.alarm+json; charset=UTF-8;ver=0.9");
 		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.alarm+json; charset=UTF-8; ver=0.9");
-
 		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setDoOutput(true);
 		
-//		POST /alarm/alarms HTTP/1.1
-//		Content-Type: application/vnd.com.nsn.cumulocity.alarm+json
-//		Accept: application/vnd.com.nsn.cumulocity.alarm+json
-//		...
-//		{
-//		"source": { "id": "10400" },
-//		"text": "Tracker lost power",
-//		"time": "2013-08-19T21:31:22.740+02:00",
-//		"type": "c8y_PowerAlarm",
-//		"status": "ACTIVE",
-//		"severity": "MAJOR",
-//		}
+		//Example Alarm JSON: 
+		//		{
+		//		"source": { "id": "10400" },
+		//		"text": "Tracker lost power",
+		//		"time": "2013-08-19T21:31:22.740+02:00",
+		//		"type": "c8y_PowerAlarm",
+		//		"status": "ACTIVE",
+		//		"severity": "MAJOR",
+		//		}
 
 		JSONObject requestObj = new JSONObject();
 		JSONObject mainObj = new JSONObject();	
@@ -299,8 +292,8 @@ public class cloudConnection {
 		requestObj.put("status", alarmStatus);
 		requestObj.put("severity", alarmSeverity);
 		
-		System.out.println(requestObj.toJSONString());
-
+		igsam.writeDebug("[sendAlarms] JSON request object: "+ requestObj.toJSONString(),2);
+		
 		OutputStream out = connection.getOutputStream();
 		
 		out.write(requestObj.toJSONString().getBytes("UTF-8"));
@@ -308,17 +301,17 @@ public class cloudConnection {
 		
 		BufferedReader inputStream;
 		
-//		HTTP/1.1 201 Created
-//		Content-Type: application/vnd.com.nsn.cumulocity.alarm+json
-//		...
-//		{
-//		"id": "214600",
-//		"self": "https://.../alarm/alarms/214600",
-//		...
-//		}
-		
+		//		HTTP/1.1 201 Created
+		//		Content-Type: application/vnd.com.nsn.cumulocity.alarm+json
+		//		...
+		//		{
+		//		"id": "214600",
+		//		"self": "https://.../alarm/alarms/214600",
+		//		...
+		//		}
 		
 		if (connection.getResponseCode() == HttpURLConnection.HTTP_CREATED){
+			
 			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
 			
 			  JSONParser parser = new JSONParser();
@@ -342,21 +335,17 @@ public class cloudConnection {
 				
 				serverAlarmID = (String) jObj.get("id");
 			
-			System.out.println("ALARM_CREATED, ID: " + serverAlarmID);
+				igsam.writeDebug("[sendAlarms]  Got 201 CREATED response.",2);
+				igsam.writeDebug("[sendAlarms]  ALARM_CREATED, ID: " + serverAlarmID,2);
+			
 		}else{
 			inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
-			System.out.println("DENY");
+			igsam.writeDebug("[sendAlarms]  Got error response.",2);
 		}
-		 
 		return serverAlarmID;
-		
-		
-		
 	}
 
 	public void updateAlarmStatus (String serverAlarmID, String alarmStatus ) throws Exception{	
-		
-		//String serverAlarmID = "";
 		
 		URL targetUrl = new URL(igsam.url+"/alarm/alarms/"+serverAlarmID);
 		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
@@ -365,43 +354,36 @@ public class cloudConnection {
 		connection.setRequestProperty("Content-Type",
 				"application/vnd.com.nsn.cumulocity.alarm+json; charset=UTF-8;ver=0.9");
 		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.alarm+json; charset=UTF-8; ver=0.9");
-
 		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setDoOutput(true);
 		
-//		PUT /alarm/alarms/ID HTTP/1.1
-//		Content-Type: application/vnd.com.nsn.cumulocity.alarm+json
-//		Accept: application/vnd.com.nsn.cumulocity.alarm+json
-//		...
-//		{
-
-//		"status": "CLEARED",
-//		}
+		//Example:
+		//		PUT /alarm/alarms/ID HTTP/1.1
+		//		Content-Type: application/vnd.com.nsn.cumulocity.alarm+json
+		//		Accept: application/vnd.com.nsn.cumulocity.alarm+json
+		//		...
+		//		{
+		
+		//		"status": "CLEARED",
+		//		}
 
 		JSONObject requestObj = new JSONObject();
 		requestObj.put("status", alarmStatus);
-
 		
-		System.out.println(requestObj.toJSONString());
+		igsam.writeDebug("[updateAlarmStatus] JSON request object: "+ requestObj.toJSONString(),2);
 
 		OutputStream out = connection.getOutputStream();
 		
 		out.write(requestObj.toJSONString().getBytes("UTF-8"));
 		out.close();
-		
-		BufferedReader inputStream;
-			
-		
+
 		if (connection.getResponseCode() == HttpURLConnection.HTTP_OK){
-			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
-	
-			System.out.println("ALARM_CLEARED, ID: " + serverAlarmID);
+			//read response from server
+			igsam.writeDebug("[updateAlarmStatus]  Got 200 OK response.",2);
 		}else{
-			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
-			System.out.println("ERROR WHILE CLEAR ALARM, ID: "+ serverAlarmID);
+			igsam.writeDebug("[updateAlarmStatus]  Got error response.",2);
+			throw new Exception();
 		}
-		
-		
 	}
 
 	
@@ -414,7 +396,6 @@ public class cloudConnection {
 		connection.setRequestProperty("Content-Type",
 				"application/vnd.com.nsn.cumulocity.event+json; charset=UTF-8;ver=0.9");
 		connection.setRequestProperty("Accept", "application/vnd.com.nsn.cumulocity.event+json; charset=UTF-8; ver=0.9");
-
 		connection.setRequestProperty("Authorization", "Basic "+encodedAuth);
 		connection.setDoOutput(true);
 			
@@ -448,29 +429,20 @@ public class cloudConnection {
 		posObj.put("lng", lngValue);
 		posObj.put("lat", latValue);
 		requestObj.put("c8y_Position", posObj);
-		
-		
-		System.out.println(requestObj.toJSONString());
 
+		igsam.writeDebug("[sendEvent] JSON request object: "+ requestObj.toJSONString(),2);
+		
 		OutputStream out = connection.getOutputStream();
 		
 		out.write(requestObj.toJSONString().getBytes("UTF-8"));
 		out.close();
 		
-		BufferedReader inputStream;
-		
 		if (connection.getResponseCode() == HttpURLConnection.HTTP_CREATED){
-			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getContent()));
-			System.out.println("ACCEPTED");
+			//read response from server
+			igsam.writeDebug("[sendEvent]  Got 201 CREATED response.",2);
 		}else{
-			//inputStream = new BufferedReader(new InputStreamReader((InputStream) connection.getErrorStream()));
-			System.out.println("DENY");
-		}
-		 
-	}
-	
-	
-
-	
-	
+			igsam.writeDebug("[sendEvent]  Got error response.",2);
+			throw new Exception();
+		}	 
+	}	
 }
