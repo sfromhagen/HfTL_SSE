@@ -2,6 +2,7 @@ package keyex;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -156,9 +157,9 @@ public class KeyExServerSession implements Runnable{
     		serverSharedSecret = new SecretKeySpec(serverSharedSecret.getEncoded(),0,16,"AES");
     		
     		if(KeyEx.debugLevel >=2){
-    			System.out.println(toHexString(serverSharedSecret.getEncoded()));
+    			System.out.println("Shared secret: " + toHexString(serverSharedSecret.getEncoded()));
     		}
-            
+                		
         }
         catch (Exception e) {
             System.out.println("error!" + e.getMessage());
@@ -182,15 +183,29 @@ public class KeyExServerSession implements Runnable{
 	    	byte[] cipherTextEnc = toByteArray(connectionObject.input.readLine());
 	    	decipheredText = aesCipher.doFinal(cipherTextEnc);
 	    	
+	    	/* Old 
 	    	MessageDigest md = MessageDigest.getInstance("SHA-256");
 	    	byte[] computedDigest = md.digest(decipheredText); 
+	    	*/
+	    	/*
+	    	HmacMD5
+	    	HmacSHA1
+	    	*/
 	    	
+	    	
+	    	
+	    	/* Support HmacSHA256 */
+	    	Mac mac = Mac.getInstance("HmacSHA256");
+	    	mac.init(serverSharedSecret);  	
+	    	byte[] computedDigest = mac.doFinal(decipheredText);
+	    	
+	    		    	
 	    	
 	    	byte[] receivedDigest = toByteArray(connectionObject.input.readLine());
 	    	
 	    	if(KeyEx.debugLevel >=2){
-    			System.out.println(toHexString(computedDigest));
-    			System.out.println(toHexString(receivedDigest));
+    			System.out.println("Computed MAC: " + toHexString(computedDigest));
+    			System.out.println("Received MAC: " + toHexString(receivedDigest));
     		}
 	    	
     		if (Arrays.equals(computedDigest, receivedDigest)){

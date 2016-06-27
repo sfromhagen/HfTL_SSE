@@ -2,6 +2,7 @@ package keyex;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
@@ -94,14 +95,14 @@ public class KeyExClientSession implements Runnable{
     		 clientSharedSecret = new SecretKeySpec(clientSharedSecret.getEncoded(),0,16,"AES");
     		 
     		 if(KeyEx.debugLevel >=2){
-    			 System.out.println(toHexString(clientSharedSecret.getEncoded()));
+    			 System.out.println("Shared secret: " + toHexString(clientSharedSecret.getEncoded()));
     		 }
     	    		 
     	} catch (Exception e){
     		e.printStackTrace();
     	}
     }
-    
+        
     /**
 	 * Uses the shared secret to encrypt the plaintext and transfer it to the server
 	 */
@@ -124,8 +125,21 @@ public class KeyExClientSession implements Runnable{
     	}
     	
     	try {
+    		
+	    	/* Support HmacSHA256 */
+	    	Mac mac = Mac.getInstance("HmacSHA256");
+	    	mac.init(clientSharedSecret);  	
+	    	digest = mac.doFinal(plaintext.getBytes());
+    		
+	    	if(KeyEx.debugLevel >=2){
+   			 System.out.println("MAC: " + toHexString(digest));
+   		 	}
+	    	
+	    	/* Old
     		MessageDigest md = MessageDigest.getInstance("SHA-256");
-    		digest = md.digest(plaintext.getBytes());		
+    		digest = md.digest());	
+    		*/
+	    	
 		} catch ( Exception e) {
 			e.printStackTrace();
 		} 

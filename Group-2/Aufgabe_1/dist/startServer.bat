@@ -1,2 +1,1 @@
-start java -jar KeyEx.jar --server
-exit
+java -jar "KeyEx.jar" -server -d 2
