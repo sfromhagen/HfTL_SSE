@@ -67,13 +67,16 @@ public class listener implements Runnable {
 				}
 
 				if (data[2].equalsIgnoreCase("measuredTemp")) {
-					cloudCon.sendData(id, Float.parseFloat(data[3]), data[0]);
+					cloudCon.sendData(id, Float.parseFloat(data[3]), data[0], data[2]);
+				} else if (data[2].equalsIgnoreCase("measuredSpeed")) {
+					cloudCon.sendData(id, Float.parseFloat(data[3]), data[0], data[2]);
 				} else if (data[2].equalsIgnoreCase("newAlarm")) {
 					cloudCon.sendAlarms(id, data[3], data[0], "c8y_PowerAlarm", "ACTIVE", "MAJOR");
 				}
 			}
 		} catch (Exception e) {
 			igsam.writeDebug("[ListenerRun] Exception while processing data, lets close this thread.", 0);
+			e.printStackTrace();
 			done = true;
 		}
 	}

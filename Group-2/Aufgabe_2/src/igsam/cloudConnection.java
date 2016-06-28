@@ -197,7 +197,7 @@ public class cloudConnection {
 		}
 	}
 
-	public void sendData(String tenantId, float value, String timestamp) throws Exception {
+	public void sendData(String tenantId, float value, String timestamp, String datatype) throws Exception {
 
 		URL targetUrl = new URL(igsam.url + "measurement/measurements");
 		HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
@@ -227,18 +227,41 @@ public class cloudConnection {
 
 		JSONObject requestObj = new JSONObject();
 		JSONObject mainObj = new JSONObject();
+	
+		
+		JSONObject measurementObj = new JSONObject();
 
-		JSONObject tObj = new JSONObject();
+		if (datatype.equalsIgnoreCase("measuredTemp")){
+			measurementObj.put("value", value);
+			measurementObj.put("unit", "C");
 
-		tObj.put("value", value);
-		tObj.put("unit", "C");
+			mainObj.put("T", measurementObj);
 
-		mainObj.put("T", tObj);
+			requestObj.put("c8y_TemperatureMeasurement", mainObj);
+			
+		}  else if (datatype.equalsIgnoreCase("measuredSpeed")) {
+			measurementObj.put("value", value);
+			measurementObj.put("unit", "m/s");
 
-		requestObj.put("c8y_TemperatureMeasurement", mainObj);
-
+//			JSONObject detectionObj = new JSONObject();
+//			detectionObj.put("value", "1.0");
+//			detectionObj.put("unit", "");
+//			detectionObj.put("type", "BOOLEAN");
+//			
+//			mainObj.put("motionDetected", detectionObj);
+			mainObj.put("speed", measurementObj);
+			
+			requestObj.put("c8y_MotionMeasurement", mainObj);
+		}
+		
+		
 		requestObj.put("time", timestamp);
 
+		
+		
+		
+		
+		
 		JSONObject sourceObj = new JSONObject();
 
 		sourceObj.put("id", tenantId);
