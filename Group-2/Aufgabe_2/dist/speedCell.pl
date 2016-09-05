@@ -14,11 +14,14 @@ my $readingCommando = "gatttool -t random -b E0:00:3F:92:2F:E8 --char-write-req 
 #my $readingCommando = "ping 192.168.2.1";
 #my $readingCommando = "perl /opt/test.pl"; print "Starting sensor\n";
 
-our $socket = IO::Socket::INET->new(PeerAddr => $host,
-                                PeerPort => $port,
-                                Proto => "tcp",
-                                Type => SOCK_STREAM)
-    or die "Couldn't connect to $host:$port : $!\n";
+if ($host ne "offline"){
+	our $socket = IO::Socket::INET->new(	PeerAddr => $host,
+                                		PeerPort => $port,
+                                		Proto => "tcp",
+                                		Type => SOCK_STREAM)
+    	or die "Couldn't connect to $host:$port : $!\n";
+}
+
 
 # execute commando and pipe stdout to our $in filehandle for further processing
 open $in, $readingCommando." |";
@@ -34,26 +37,38 @@ while (my $line = <$in>) {
 
     # trim linebreaks and remove all whitespaces
     chomp ($hex);
-    $hex =~ s/\s//g;
     print "Extracted hex: ",$hex,"\n";
+    $hex =~ s/\s//g;
 
-    ($flags, $speed, $cadence, $rest ) = unpack("A2A4A2A*", $hex);
+    ($flags, $speed, $cadence, $rest ) = unpack("a2a4a2a*", $hex);
+
+    # speed needs preprocessing
+    $speed= join('',reverse ( $speed =~ m/../g ));
 
     $flags = hex($flags);
-    $speed = hex(reverse($speed));
+    $speed = hex($speed);
     $speed = $speed/256.0;
-    $cadence = hex(reverse($cadence));
+    $speed_in_kmh = $speed * 3.6;
+    $cadence = hex($cadence);
 
     if ($flags & 0b00000001){
         print "Stride Length present!\n";
-        ($stride, $rest) = unpack("A4A*", $rest);
-        $stride = hex(reverse($stride));
+        ($stride, $rest) = unpack("a4a*", $rest);
+	
+	# preprocessing to fix the byte order
+    	$stride = join('',reverse ( $stride =~ m/../g ));
+
+        $stride = hex($stride);
         $stride = $stride/100;
     }
     if ($flags & 0b00000010){
         print "Total Distance present!\n";
-        ($distance, $rest) = unpack("A8A*", $rest);
-        $distance = hex(reverse($distance));
+        ($distance, $rest) = unpack("a8a*", $rest);
+
+	# preprocessing to fix the byte order
+        $distance = join('',reverse ( $distance =~ m/../g ));
+
+        $distance = hex($distance);
         $distance = $distance/10;
 
     }
@@ -64,6 +79,7 @@ while (my $line = <$in>) {
     }
 
     print "Speed[m/s]: $speed\n";
+    print "Speed[km/h]: $speed_in_kmh\n";
     print "Cadence[rpm]: $cadence\n";
     print "Stride[m]: (not supported) $stride\n";
     print "Distance[m]: $distance\n\n";
@@ -78,8 +94,12 @@ while (my $line = <$in>) {
     my $time = $dt->hms; # Retrieves time as a string in 'hh:mm:ss' format
 
     my $line = join(";",$date."T".$time.".123+02:00","SpeedSensor","measuredSpeed",$speed);
-    print $socket "$line\n";
     print "$line\n";
+
+    if ($host ne "offline"){
+	print $socket "$line\n";
+    }
+
 
 }
 close($in);
