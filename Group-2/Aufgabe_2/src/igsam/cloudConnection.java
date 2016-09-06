@@ -242,16 +242,28 @@ public class cloudConnection {
 		}  else if (datatype.equalsIgnoreCase("measuredSpeed")) {
 			measurementObj.put("value", value);
 			measurementObj.put("unit", "m/s");
-
-//			JSONObject detectionObj = new JSONObject();
-//			detectionObj.put("value", "1.0");
-//			detectionObj.put("unit", "");
-//			detectionObj.put("type", "BOOLEAN");
-//			
-//			mainObj.put("motionDetected", detectionObj);
-			mainObj.put("speed", measurementObj);
+			
+			float detect;
+			if (value > 0){
+				detect = (float) 1.0;
+			}else{
+				detect = (float) 0.0;	
+			}
+			JSONObject detectionObj = new JSONObject();
+			detectionObj.put("value", detect);
+			detectionObj.put("unit", "");
+			detectionObj.put("type", "BOOLEAN");			
+			mainObj.put("motionDetected", detectionObj);
+			mainObj.put("speed", measurementObj); 
 			
 			requestObj.put("c8y_MotionMeasurement", mainObj);
+		} else if (datatype.equalsIgnoreCase("measuredDistance")) {
+			measurementObj.put("value", value);
+			measurementObj.put("unit", "m");
+			
+			mainObj.put("distance", measurementObj);
+			
+			requestObj.put("c8y_DistanceMeasurement", mainObj);
 		}
 		
 		
